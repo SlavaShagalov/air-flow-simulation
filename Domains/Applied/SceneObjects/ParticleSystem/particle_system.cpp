@@ -60,7 +60,7 @@ void ParticleSystem::initialize(int nParticles) {
   //  (see
   //                                 // wikipedia page on viscosity)
 
-  _param[REST_DENSITY] = 600.0;  // kg / m^3 WATER
+  _param[REST_DENSITY] = 600.0;  // kg / m^3; WATER
   //  _param[REST_DENSITY] = 1.225;  // kg / m^3 AIR
 
   _param[P_MASS] = 0.00020543;  // kg WATER
@@ -326,8 +326,6 @@ void ParticleSystem::advance() {
 
   _time += _dt;
 }
-
-// void ParticleSystem::setup() {}
 
 void ParticleSystem::computeKernels() {
   _param[P_DIST] = pow(_param[P_MASS] / _param[REST_DENSITY], 1 / 3.0);

@@ -79,12 +79,7 @@ public:
   virtual Vec3f center() const override { return _center; }
   virtual Vec3f& center() override { return _center; }
 
-  // SPH
-  //  void reset(int nmax);
-  //  void setup();
-
   void computeKernels();
-
   void computePressureGrid();  // O(kn) - spatial grid
   void computeForceGridNC();   // O(cn) - neighbor table
 
