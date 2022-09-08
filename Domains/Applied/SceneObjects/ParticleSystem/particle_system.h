@@ -70,8 +70,8 @@ public:
 
   // control methods
   void initialize(int nmax);
-  void createExample(int n, int nmax, float xMin, float xMax, float yMin,
-                     float yMax, float zMin, float zMax);
+  void createExample(float xMin, float xMax, float yMin, float yMax, float zMin,
+                     float zMax);
   void run();
   void advance();
 
@@ -80,8 +80,8 @@ public:
   virtual Vec3f& center() override { return _center; }
 
   // SPH
-  void reset(int nmax);
-  void setup();
+  //  void reset(int nmax);
+  //  void setup();
 
   void computeKernels();
 
@@ -108,8 +108,6 @@ public:
                  float border);
   void gridInsertParticles();
   void gridFindCells(Vec3f p, float radius);
-
-  void myReset();
 
   // vizitor methods
   virtual void accept(BaseDrawVisitor& visitor) override {

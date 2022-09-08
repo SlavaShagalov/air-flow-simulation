@@ -12,45 +12,80 @@
 int ParticleSystem::_pCurr = -1;
 
 ParticleSystem::ParticleSystem(std::shared_ptr<BaseObject> model)
-    : _obstacle(model) {
-  _gridRes.set(0, 0, 0);
-  _pCurr = -1;
-  myReset();
-}
+    : _obstacle(model), _particles(NULL), _nParticles(0) {}
 
 void ParticleSystem::initialize(int nParticles) {
-  freeParticles();
-  allocParticles(nParticles);
+  allocParticles(nParticles);  // create place for n particles
 
-  setup();
-  reset(nParticles);
-}
+  _gridRes.set(0, 0, 0);
+  _pCurr = -1;
+  _time = 0;
 
-void ParticleSystem::reset(int nmax) {
-  reallocParticles(nmax);
-
+  //  _dt = 0.1;
   _dt = 0.003;
 
-  // Reset parameters
-  _param[MAX_FRAC] = 1.0;
+  _param[CLR_MODE] = 2.0;
+
+  //  _param[POINT_GRAV] = 100.0;
   _param[POINT_GRAV] = 0.0;
+
+  //  _param[PLANE_GRAV] = 0.0;
   _param[PLANE_GRAV] = 1.0;
+
+  _vec[POINT_GRAV_POS].set(0, 0, 50.0);
+
+  _vec[PLANE_GRAV_DIR].set(0.0, 0.0, 0.0);
+
+  // Emit param
+  _vec[EMIT_SPREAD].set(4, 4, 1);
+
+  //    _vec[EMIT_POS].set(50, 0, 35);
+  _vec[EMIT_POS].set(0, 0, 0);
+
+  //  _vec[EMIT_RATE].set(1, 10, 0);
+  _vec[EMIT_RATE].set(0, 0, 0);
+
+  //  _vec[EMIT_ANG].set(90, 45, 50.0);
+  _vec[EMIT_ANG].set(0, 90, 1.0);
+
+  _vec[EMIT_DANG].set(0, 0, 0);
+
+  //
+  _param[SIM_SCALE] = 0.004;  // unit size
+
+  //  _param[VISCOSITY] = 1.81e-5;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
+  //  (see
+  // wikipedia page on viscosity) 1.81 × 10-5
+  _param[VISCOSITY] = 0.2;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
+  //  (see
+  //                                 // wikipedia page on viscosity)
+
+  _param[REST_DENSITY] = 600.0;  // kg / m^3 WATER
+  //  _param[REST_DENSITY] = 1.225;  // kg / m^3 AIR
+
+  _param[P_MASS] = 0.00020543;  // kg WATER
+
+  _param[P_RADIUS] = 0.004;  // m
+
+  _param[P_DIST] = 0.0059;  // m
+
+  _param[SMOOTH_RADIUS] = 0.01;  // m
+
+  _param[EXT_DAMP] = 256.0;
+  _param[LIMIT] = 200.0;  // m / s
+
+  // from reset()
+  _param[MAX_FRAC] = 1.0;  // ?
 
   _param[BOUND_Z_MIN_SLOPE] = 0.0;
   _param[FORCE_X_MAX_SIN] = 0.0;
   _param[FORCE_X_MIN_SIN] = 0.0;
-  _param[INT_STIFF] = 1.00;
-  _param[VISCOSITY] = 0.2;
-  _param[INT_STIFF] = 0.50;
-  _param[EXT_STIFF] = 20000;
-  _param[SMOOTH_RADIUS] = 0.01;
 
-  _vec[POINT_GRAV_POS].set(0, 0, 50);
-  _vec[PLANE_GRAV_DIR].set(0, 0, -9.8);
-  _vec[EMIT_POS].set(0, 0, 0);
-  _vec[EMIT_RATE].set(0, 0, 0);
-  _vec[EMIT_ANG].set(0, 90, 1.0);
-  _vec[EMIT_DANG].set(0, 0, 0);
+  //  _param[INT_STIFF] = 1.00;
+  _param[INT_STIFF] = 0.50;
+
+  //   _param[EXT_STIFF] = 10000.0;
+  _param[EXT_STIFF] = 20000;
 }
 
 int ParticleSystem::addPointReuse() {
@@ -292,28 +327,11 @@ void ParticleSystem::advance() {
   _time += _dt;
 }
 
-void ParticleSystem::setup() {
-  _param[SIM_SCALE] = 0.004;    // unit size
-  _param[VISCOSITY] = 1.81e-5;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1  (see
-                                // wikipedia page on viscosity) 1.81 × 10-5
-  //  _param[VISCOSITY] = 0.2;       // pascal-second (Pa.s) = 1 kg m^-1 s^-1
-  //  (see
-  //                                 // wikipedia page on viscosity)
-  _param[REST_DENSITY] = 600.0;  // kg / m^3
-  _param[P_MASS] = 0.00020543;   // kg
-  _param[P_RADIUS] = 0.004;      // m
-  _param[P_DIST] = 0.0059;       // m
-  _param[SMOOTH_RADIUS] = 0.01;  // m
-  _param[INT_STIFF] = 1.00;
-  _param[EXT_STIFF] = 10000.0;
-  _param[EXT_DAMP] = 256.0;
-  _param[LIMIT] = 200.0;  // m / s
-
-  computeKernels();
-}
+// void ParticleSystem::setup() {}
 
 void ParticleSystem::computeKernels() {
   _param[P_DIST] = pow(_param[P_MASS] / _param[REST_DENSITY], 1 / 3.0);
+
   _R2 = _param[SMOOTH_RADIUS] * _param[SMOOTH_RADIUS];
   _Poly6Kern =
   315.0f / (64.0f * 3.141592 *
@@ -325,72 +343,23 @@ void ParticleSystem::computeKernels() {
   _LapKern = 45.0f / (3.141592 * pow(_param[SMOOTH_RADIUS], 6));
 }
 
-void ParticleSystem::createExample(int n, int nmax, float xMin, float xMax,
-                                   float yMin, float yMax, float zMin,
-                                   float zMax) {
-  reset(nmax);
+void ParticleSystem::createExample(float xMin, float xMax, float yMin,
+                                   float yMax, float zMin, float zMax) {
+  _vec[VOL_MIN].set(xMin, yMin, zMin);
+  _vec[VOL_MAX].set(xMax, yMax, zMax);
 
-  switch (n) {
-    case 0:  // Wave pool
-      _vec[VOL_MIN].set(-30, -30, 0);
-      _vec[VOL_MAX].set(30, 30, 40);
+  _vec[INIT_MIN].set(xMin, yMin, zMin);
+  _vec[INIT_MAX].set(xMax, yMax, zMax);
 
-      _vec[INIT_MIN].set(-20, -26, 10);
-      _vec[INIT_MAX].set(20, 26, 40);
-
-      _param[FORCE_X_MIN_SIN] = 12.0;
-      _param[BOUND_Z_MIN_SLOPE] = 0.05;
-      break;
-    case 11:  // My 1
-      _vec[VOL_MIN].set(-30, -30, 0);
-      _vec[VOL_MAX].set(30, 30, 40);
-      _vec[INIT_MIN].set(-25, -25, 20);
-      _vec[INIT_MAX].set(25, 25, 40);
-
-      _param[FORCE_X_MIN_SIN] = 12.0;  // Wall XMin Forse
-                                       //      m_Param[FORCE_XMAX_SIN] = 6.0;
-
-      _param[BOUND_Z_MIN_SLOPE] = 0.0;  // default 0.05
-
-      _vec[PLANE_GRAV_DIR].set(0.0, 0.0, -9.8);  // g vector
-      //      m_Vec[POINT_GRAV_POS].set(0, 0, 25); // ?
-      //      m_Param[POINT_GRAV] = 3.5;// ?
-      //      m_Param[SPH_VISC] = 0.1;                    // default 0.1
-      //      m_Param[SPH_INTSTIFF] = 0.50;  // default 0.50
-      //      m_Param[SPH_EXTSTIFF] = 5000;  // default 8000
-
-      // emit
-      //      m_Vec[EMIT_POS].set(-20, -20, 22);
-      //      m_Vec[EMIT_RATE].set(1, 4, 0);
-      //      m_Vec[EMIT_ANG].set(0, 120, 1.5);
-      //      m_Vec[EMIT_DANG].set(0, 0, 0);
-
-      break;
-    case 12:
-      _param[CLR_MODE] = 2.0;
-      //      _param[CLR_MODE] = 1.0;
-
-      _vec[VOL_MIN].set(xMin, yMin, zMin);
-      _vec[VOL_MAX].set(xMax, yMax, zMax);
-
-      _vec[INIT_MIN].set(xMin, yMin, zMin);
-      _vec[INIT_MAX].set(xMax, yMax, zMax);
-
-      _vec[PLANE_GRAV_DIR].set(0.0, 0.0, 0.0);
-
-      _vec[EMIT_POS].set(xMax, yMin + 10, zMin + 10);
-      _vec[EMIT_RATE].set(1, 4, 0);  // default 1, 4, 0
-      _vec[EMIT_ANG].set(0, 0, 0);
-
-      //      m_Param[FORCE_XMIN_SIN] = 12.0;
-      //      m_Param[BOUND_ZMIN_SLOPE] = 0.05;
-      break;
-  }
+  _vec[EMIT_POS].set(xMax, yMin + 10, zMin + 10);
+  _vec[EMIT_RATE].set(1, 4, 0);  // default 1, 4, 0
+  _vec[EMIT_ANG].set(0, 0, 0);
 
   computeKernels();
 
   _param[SIM_SIZE] =
   _param[SIM_SCALE] * (_vec[VOL_MAX].z() - _vec[VOL_MIN].z());
+
   _param[P_DIST] = pow(_param[P_MASS] / _param[REST_DENSITY], 1 / 3.0);
 
   float ss = _param[P_DIST] * 0.87 / _param[SIM_SCALE];
@@ -400,10 +369,6 @@ void ParticleSystem::createExample(int n, int nmax, float xMin, float xMax,
             ss);  // Create the particles
 
   float cell_size = _param[SMOOTH_RADIUS] * 2.0;  // Grid cell size (2r)
-
-  //  Grid_Setup(_vec[VOL_MIN], _vec[VOL_MAX], _param[SIM_SCALE], cell_size,
-  //             1.0);  // Setup grid
-
   gridSetup(_vec[VOL_MIN], _vec[VOL_MAX], _param[SIM_SCALE], cell_size,
             1.0);  // Setup grid
 
@@ -714,19 +679,4 @@ void ParticleSystem::gridFindCells(Vec3f p, float radius) {
     _gridCell[6] = -1;
     _gridCell[7] = -1;
   }
-}
-
-void ParticleSystem::myReset() {
-  _time = 0;
-  _dt = 0.1;
-  _param[POINT_GRAV] = 100.0;
-  _param[PLANE_GRAV] = 0.0;
-
-  _vec[POINT_GRAV_POS].set(0, 0, 50.0);
-  _vec[PLANE_GRAV_DIR].set(0, 0, -9.8);
-  _vec[EMIT_RATE].set(1, 10, 0);
-  _vec[EMIT_POS].set(50, 0, 35);
-  _vec[EMIT_ANG].set(90, 45, 50.0);
-  _vec[EMIT_DANG].set(0, 0, 0);
-  _vec[EMIT_SPREAD].set(4, 4, 1);
 }

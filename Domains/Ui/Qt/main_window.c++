@@ -545,8 +545,8 @@ void MainWindow::on_runSimBtn_clicked() {
 
       const int nParticles = _ui->nParticlesSpinBox->value();
       psys->initialize(nParticles);
-      psys->createExample(12, nParticles, _xMin * 30, _xMax * 30, _yMin * 30,
-                          _yMax * 30, _zMin * 30, _zMax * 30);
+      psys->createExample(_xMin * 30, _xMax * 30, _yMin * 30, _yMax * 30,
+                          _zMin * 30, _zMax * 30);
     }
 
     _simRunnedDisableInterface();
