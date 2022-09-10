@@ -39,6 +39,7 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent)
   _ui->setupUi(this);
   _ui->ViewParticleGroupBox->setVisible(false);  // TODO: implement
   _ui->lightRadioBtn->setVisible(false);
+  _ui->modelPressureCheckBox->setVisible(false);
 
   _timer.setSingleShot(true);
   connect(&_timer, SIGNAL(timeout()), this, SLOT(start()));

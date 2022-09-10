@@ -71,8 +71,6 @@ SOURCES += \
 	Domains/Ui/Qt/custom_graphics_view.c++ \
 	Domains/Ui/Qt/main_window.c++ \
 	Domains/main.cpp \
-	debug/moc_custom_graphics_view.cpp \
-	debug/moc_main_window.cpp
 
 HEADERS += \
 	Domains/Applied/Color/color.h \
@@ -185,7 +183,6 @@ HEADERS += \
 	Domains/Ui/Qt/Drawer/qt_drawer_factory.h \
 	Domains/Ui/Qt/custom_graphics_view.h \
 	Domains/Ui/Qt/main_window.h \
-	debug/moc_predefs.h
 
 FORMS += \
 	Domains/Ui/Qt/main_window.ui
@@ -197,7 +194,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
 	.gitignore \
-	.qmake.stash \
 	Data/Models/Polygonal/Other/Airplane_Project.obj \
 	Data/Models/Polygonal/Other/B206JR_obj.obj \
 	Data/Models/Polygonal/Other/Su_57.obj \
@@ -212,68 +208,4 @@ DISTFILES += \
 	Data/Models/Polygonal/Triangulated/cube.obj \
 	Data/Models/Polygonal/Triangulated/heart.obj \
 	README.md \
-	debug/add_camera_command.o \
-	debug/add_model_command.o \
-	debug/air-flow-simulation.exe \
-	debug/camera.o \
-	debug/camera_file_loader.o \
-	debug/camera_load_director.o \
-	debug/color.o \
-	debug/composite.o \
-	debug/count_cameras_command.o \
-	debug/count_models_command.o \
-	debug/custom_graphics_view.o \
-	debug/draw_manager.o \
-	debug/draw_scene_command.o \
-	debug/draw_visitor.o \
-	debug/edge.o \
-	debug/errors.o \
-	debug/face.o \
-	debug/file_camera_builder.o \
-	debug/file_polygon_model_builder.o \
-	debug/file_wireframe_model_builder.o \
-	debug/get_cur_camera_command.o \
-	debug/get_object_command.o \
-	debug/get_scene_command.o \
-	debug/image.o \
-	debug/light.o \
-	debug/load_camera_command.o \
-	debug/load_director_solution.o \
-	debug/load_manager.o \
-	debug/load_model_command.o \
-	debug/load_polygonal_model_command.o \
-	debug/main.o \
-	debug/main_manager.o \
-	debug/main_window.o \
-	debug/matrix_base.o \
-	debug/moc_custom_graphics_view.o \
-	debug/moc_main_window.o \
-	debug/move_camera_command.o \
-	debug/move_model_command.o \
-	debug/particle.o \
-	debug/particle_system.o \
-	debug/polygonal_model.o \
-	debug/polygonal_model_components.o \
-	debug/polygonal_model_file_loader.o \
-	debug/polygonal_model_load_director.o \
-	debug/qt_drawer.o \
-	debug/qt_drawer_factory.o \
-	debug/remove_camera_command.o \
-	debug/remove_model_command.o \
-	debug/rotate_model_command.o \
-	debug/scale_model_command.o \
-	debug/scene.o \
-	debug/scene_manager.o \
-	debug/set_cur_camera_command.o \
-	debug/solution_drawer_factory.o \
-	debug/transform_manager.o \
-	debug/transform_model_command.o \
-	debug/transform_visitor.o \
-	debug/utils.o \
-	debug/wireframe_model.o \
-	debug/wireframe_model_components.o \
-	debug/wireframe_model_file_loader.o \
-	debug/wireframe_model_load_director.o \
-	object_script.air-flow-simulation.Debug \
-	object_script.air-flow-simulation.Release
 

@@ -138,18 +138,15 @@ void ParticleSystem::advance() {
   Vec3f pc1, pc2, pc3;
   float a1, a2, a3, dist;
 
-  Particle *pbeg, *pend, *p;
-  Vec3f norm;
-  Vec3f accel;
-  Vec3f vnext;
+  Particle *pend, *p;
+  Vec3f norm, accel, vnext;
   Vec3f min, max;
   double adj;
-  float SL, SL2, ss, radius;
+  float ss, radius;
   float stiff, damp, speed, diff;
-  SL = _param[LIMIT];
-  SL2 = SL * SL;
 
-  stiff = _param[EXT_STIFF];
+  stiff = _param[EXT_STIFF];  // коэффициент жесткости для столкновения со
+                              // стенками и полигонами обьектов
   damp = _param[EXT_DAMP];
   radius = _param[P_RADIUS];
   min = _vec[VOL_MIN];
@@ -159,18 +156,15 @@ void ParticleSystem::advance() {
   Vec3i d = Vec3i((max - min).x(), (max - min).y(), (max - min).z());
 
   pend = _particles + _nParticles;
-  for (pbeg = _particles; pbeg < pend; pbeg++) {
-    p = pbeg;
-
+  for (p = _particles; p < pend; p++) {
     // Compute Acceleration
-    accel = p->force;
-    accel *= _param[P_MASS];  // a = F / m?
+    accel = p->force * _param[P_MASS];  // Why, a = F / m?
 
     // Velocity limiting
     speed =
     accel.x() * accel.x() + accel.y() * accel.y() + accel.z() * accel.z();
-    if (speed > SL2) {
-      accel *= SL / sqrt(speed);
+    if (speed > _param[LIMIT] * _param[LIMIT]) {
+      accel *= _param[LIMIT] / sqrt(speed);
     }
 
     // Obstacle collision
@@ -179,13 +173,13 @@ void ParticleSystem::advance() {
       v1 = vertices[face.vertex(0)];
       v2 = vertices[face.vertex(1)];
       v3 = vertices[face.vertex(2)];
+      // TODO: solve scale problem
       v1 *= 30;
       v2 *= 30;
       v3 *= 30;
       //     std::cout << p1 << " " << p2 << std::endl;
 
-      normal = Vec3f::crossProduct(v2 - v1, v3 - v1);
-      normal.normalize();
+      normal = Vec3f::crossProduct(v2 - v1, v3 - v1).normalize();
 
       A = normal.x();
       B = normal.y();
@@ -230,10 +224,7 @@ void ParticleSystem::advance() {
     }
 
     // Z-axis walls
-    diff = 2 * radius -
-           (p->pos.z() - min.z() -
-            (p->pos.x() - _vec[VOL_MIN].x()) * _param[BOUND_Z_MIN_SLOPE]) *
-           ss;
+    diff = 2 * radius - (p->pos.z() - min.z()) * ss;
     if (diff > EPSILON) {
       norm.set(-_param[BOUND_Z_MIN_SLOPE], 0, 1.0 - _param[BOUND_Z_MIN_SLOPE]);
 
@@ -242,7 +233,6 @@ void ParticleSystem::advance() {
       accel.y() += adj * norm.y();
       accel.z() += adj * norm.z();
     }
-
     diff = 2 * radius - (max.z() - p->pos.z()) * ss;
     if (diff > EPSILON) {
       norm.set(0, 0, -1);
@@ -265,7 +255,6 @@ void ParticleSystem::advance() {
       p->age = 0;
       continue;
     }
-
     diff = 2 * radius - (max.x() - p->pos.x()) * ss;
     if (diff > EPSILON) {
       norm.set(-1, 0, 0);
@@ -278,7 +267,6 @@ void ParticleSystem::advance() {
 
     // Y-axis walls
     diff = 2 * radius - (p->pos.y() - min.y()) * ss;
-    //    diff = 2 * radius - (p->pos.y() + 7) * ss;
     if (diff > EPSILON) {
       norm.set(0, 1, 0);
 
@@ -288,7 +276,6 @@ void ParticleSystem::advance() {
       accel.z() += adj * norm.z();
     }
     diff = 2 * radius - (max.y() - p->pos.y()) * ss;
-    //    diff = 2 * radius - (7 - p->pos.y()) * ss;
     if (diff > EPSILON) {
       norm.set(0, -1, 0);
 
@@ -302,14 +289,17 @@ void ParticleSystem::advance() {
     vnext = accel;
     vnext *= _dt;
     vnext += p->vel;  // v(t+1/2) = v(t-1/2) + a(t) dt
+
     p->vel_eval = p->vel;
     p->vel_eval += vnext;
     p->vel_eval *=
     0.5;  // v(t+1) = [v(t-1/2) + v(t+1/2)] * 0.5		used to compute forces later
+
     p->vel = vnext;
     vnext *= _dt / ss;
     p->pos += vnext;  // p(t+1) = p(t) + v(t+1/2) dt
 
+    // set color
     if (_param[CLR_MODE] == 1.0) {
       adj = fabs(vnext.x()) + fabs(vnext.y()) + fabs(vnext.z()) / 7000.0;
       adj = (adj > 1.0) ? 1.0 : adj;
@@ -371,64 +361,56 @@ void ParticleSystem::createExample(float xMin, float xMax, float yMin,
             1.0);  // Setup grid
 
   gridInsertParticles();
-
-  Vec3f vmin, vmax;
-  vmin = _vec[VOL_MIN];
-  vmin -= Vec3f(2, 2, 2);
-  vmax = _vec[VOL_MAX];
-  vmax += Vec3f(2, 2, -2);
 }
 
 // Compute Pressures - Using spatial grid, and also create neighbor table
 void ParticleSystem::computePressureGrid() {
-  Particle *pbeg, *pend, *p;
-  Particle* pcurr;
+  Particle *pend = _particles + _nParticles, *p, *pcurr;
   int pndx;
-  int i;
-  float dx, dy, dz, sum, dsq, c;
-  float d, mR, mR2;
-  float radius = _param[SMOOTH_RADIUS] / _param[SIM_SCALE];
-  d = _param[SIM_SCALE];
-  mR = _param[SMOOTH_RADIUS];
-  mR2 = mR * mR;
+  float dx, dy, dz, sum, dSqr, c;
+  float h = _param[SMOOTH_RADIUS], h2 = h * h;
+  float simH = _param[SMOOTH_RADIUS] / _param[SIM_SCALE];
 
-  pend = _particles + _nParticles;
-  i = 0;
-  for (pbeg = _particles; pbeg < pend; pbeg++, i++) {
-    p = (Particle*)pbeg;
-
+  int i = 0;
+  for (p = _particles; p < pend; p++, i++) {
     sum = 0.0;
     _neighborTable[i] = 0;
 
-    //    Grid_FindCells(p->pos, radius);
-    gridFindCells(p->pos, radius);
-    for (int cell = 0; cell < 8; cell++) {
-      if (_gridCell[cell] != -1) {
-        pndx = _grid[_gridCell[cell]];
-        while (pndx != -1) {
-          pcurr = _particles + pndx;
+    gridFindCells(p->pos, simH);
+
+    for (int j = 0; j < 8; j++) {
+      if (_gridCell[j] != -1) {
+        pndx = _grid[_gridCell[j]];
+        while (pndx != -1) {          // if j-th cell has 1 or more particles
+          pcurr = _particles + pndx;  // get first particle in j neighbor cell
           if (pcurr == p) {
-            pndx = pcurr->next;
-            continue;
+            pndx = pcurr->next;  // get next particle in this cell
+            continue;            // ignore itself
           }
-          dx = (p->pos.x() - pcurr->pos.x()) * d;  // dist in cm
-          dy = (p->pos.y() - pcurr->pos.y()) * d;
-          dz = (p->pos.z() - pcurr->pos.z()) * d;
-          dsq = (dx * dx + dy * dy + dz * dz);
-          if (mR2 > dsq) {
-            c = _R2 - dsq;
+
+          // dist between particles in cm
+          dx = (p->pos.x() - pcurr->pos.x()) * _param[SIM_SCALE];
+          dy = (p->pos.y() - pcurr->pos.y()) * _param[SIM_SCALE];
+          dz = (p->pos.z() - pcurr->pos.z()) * _param[SIM_SCALE];
+          dSqr = (dx * dx + dy * dy + dz * dz);
+
+          if (dSqr < h2) {
+            c = _R2 - dSqr;  // kernel
             sum += c * c * c;
             if (_neighborTable[i] < MAX_NEIGHBOR) {
               _neighbor[i][_neighborTable[i]] = pndx;
-              _neighborDist[i][_neighborTable[i]] = sqrt(dsq);
+              _neighborDist[i][_neighborTable[i]] = sqrt(dSqr);
               _neighborTable[i]++;
             }
           }
-          pndx = pcurr->next;
+
+          pndx = pcurr->next;  // get next particle in this cell
         }
       }
-      _gridCell[cell] = -1;
+
+      _gridCell[j] = -1;
     }
+
     p->density = sum * _param[P_MASS] * _Poly6Kern;
     p->pressure = (p->density - _param[REST_DENSITY]) * _param[INT_STIFF];
     p->density = 1.0f / p->density;
@@ -437,43 +419,41 @@ void ParticleSystem::computePressureGrid() {
 
 // Compute Forces - Using spatial grid with saved neighbor table. Fastest.
 void ParticleSystem::computeForceGridNC() {
-  Particle *pbeg, *pend, *p;
-  Particle* pcurr;
+  Particle *pend = _particles + _nParticles, *p, *pcur;
   Vec3f force;
   float pterm, vterm, dterm;
-  int i;
-  float c, d;
+  int i = 0;
+  float c;
   float dx, dy, dz;
-  float mR, visc;
 
-  d = _param[SIM_SCALE];
-  mR = _param[SMOOTH_RADIUS];
-  visc = _param[VISCOSITY];
-
-  pend = _particles + _nParticles;
-  i = 0;
-
-  for (pbeg = _particles; pbeg < pend; pbeg++, i++) {
-    p = (Particle*)pbeg;
-
+  for (p = _particles; p < pend; p++, i++) {
     force.set(0, 0, 0);
+
     for (int j = 0; j < _neighborTable[i]; j++) {
-      pcurr = _particles + _neighbor[i][j];
-      dx = (p->pos.x() - pcurr->pos.x()) * d;  // dist in cm
-      dy = (p->pos.y() - pcurr->pos.y()) * d;
-      dz = (p->pos.z() - pcurr->pos.z()) * d;
-      c = (mR - _neighborDist[i][j]);
-      pterm = -0.5f * c * _SpikyKern * (p->pressure + pcurr->pressure) /
+      pcur = _particles + _neighbor[i][j];
+
+      // dist in cm
+      dx = (p->pos.x() - pcur->pos.x()) * _param[SIM_SCALE];
+      dy = (p->pos.y() - pcur->pos.y()) * _param[SIM_SCALE];
+      dz = (p->pos.z() - pcur->pos.z()) * _param[SIM_SCALE];
+
+      c = (_param[SMOOTH_RADIUS] - _neighborDist[i][j]);
+
+      pterm = -0.5f * c * _SpikyKern * (p->pressure + pcur->pressure) /
               _neighborDist[i][j];
-      dterm = c * p->density * pcurr->density;
-      vterm = _LapKern * visc;
+
+      dterm = c * p->density * pcur->density;
+
+      vterm = _LapKern * _param[VISCOSITY];
+
       force.x() +=
-      (pterm * dx + vterm * (pcurr->vel_eval.x() - p->vel_eval.x())) * dterm;
+      (pterm * dx + vterm * (pcur->vel_eval.x() - p->vel_eval.x())) * dterm;
       force.y() +=
-      (pterm * dy + vterm * (pcurr->vel_eval.y() - p->vel_eval.y())) * dterm;
+      (pterm * dy + vterm * (pcur->vel_eval.y() - p->vel_eval.y())) * dterm;
       force.z() +=
-      (pterm * dz + vterm * (pcurr->vel_eval.z() - p->vel_eval.z())) * dterm;
+      (pterm * dz + vterm * (pcur->vel_eval.z() - p->vel_eval.z())) * dterm;
     }
+
     p->force = force;
   }
 }
@@ -571,23 +551,27 @@ void ParticleSystem::addVolume(Vec3f min, Vec3f max, float spacing) {
 void ParticleSystem::gridSetup(Vec3f min, Vec3f max, float sim_scale,
                                float cell_size, float border) {
   float world_cellsize = cell_size / sim_scale;
+  qDebug() << "World Cell Size = " << world_cellsize;
   _grid.clear();
   _gridMin = min;
   _gridMin -= border;
   _gridMax = max;
   _gridMax += border;
-  _gridSize = _gridMax;
-  _gridSize -= _gridMin;
+  _gridSize = _gridMax - _gridMin;
   _gridCellSize = world_cellsize;
-  _gridRes.x() =
-  ceil(_gridSize.x() / world_cellsize);  // Determine grid resolution
-  _gridRes.y() = ceil(_gridSize.y() / world_cellsize);
-  _gridRes.z() = ceil(_gridSize.z() / world_cellsize);
-  _gridSize.x() = _gridRes.x() * cell_size /
-                  sim_scale;  // Adjust grid size to multiple of cell size
-  _gridSize.y() = _gridRes.y() * cell_size / sim_scale;
-  _gridSize.z() = _gridRes.z() * cell_size / sim_scale;
-  _gridDelta = _gridRes;  // delta = translate from world space to cell #
+
+  // Determine grid resolution
+  _gridRes.x() = ceil(_gridSize.x() / _gridCellSize);
+  _gridRes.y() = ceil(_gridSize.y() / _gridCellSize);
+  _gridRes.z() = ceil(_gridSize.z() / _gridCellSize);
+
+  // Adjust grid size to multiple of cell size
+  _gridSize.x() = _gridRes.x() * _gridCellSize;
+  _gridSize.y() = _gridRes.y() * _gridCellSize;
+  _gridSize.z() = _gridRes.z() * _gridCellSize;
+
+  // delta = translate from world space to cell #
+  _gridDelta = _gridRes;
   _gridDelta /= _gridSize;
   _gridTotal = (int)(_gridSize.x() * _gridSize.y() * _gridSize.z());
 
@@ -596,6 +580,7 @@ void ParticleSystem::gridSetup(Vec3f min, Vec3f max, float sim_scale,
 
   _grid.reserve(_gridTotal);
   _gridCnt.reserve(_gridTotal);
+
   for (int n = 0; n < _gridTotal; n++) {
     _grid.push_back(-1);
     _gridCnt.push_back(0);
@@ -603,16 +588,16 @@ void ParticleSystem::gridSetup(Vec3f min, Vec3f max, float sim_scale,
 }
 
 void ParticleSystem::gridInsertParticles() {
-  Particle *pbeg, *pend, *p;
+  Particle *pend, *p;
 
-  int gs;
-  int gx, gy, gz;
+  int gridId;
+  int xGridId, yGridId, zGridId;
 
   pend = _particles + _nParticles;
 
   // set next = -1
-  for (pbeg = _particles; pbeg < pend; pbeg++)
-    pbeg->next = -1;
+  for (p = _particles; p < pend; p++)
+    p->next = -1;
 
   for (int n = 0; n < _gridTotal; n++) {
     _grid[n] = -1;
@@ -620,58 +605,62 @@ void ParticleSystem::gridInsertParticles() {
   }
 
   int n = 0;
-  for (pbeg = _particles; pbeg < pend; pbeg++) {
-    p = pbeg;
+  for (p = _particles; p < pend; p++) {
+    // Determine grid cell id in axis
+    xGridId = (int)((p->pos.x() - _gridMin.x()) * _gridDelta.x());
+    yGridId = (int)((p->pos.y() - _gridMin.y()) * _gridDelta.y());
+    zGridId = (int)((p->pos.z() - _gridMin.z()) * _gridDelta.z());
 
-    gx = (int)((p->pos.x() - _gridMin.x()) * _gridDelta.x());  // Determine
-                                                               // grid cell
-    gy = (int)((p->pos.y() - _gridMin.y()) * _gridDelta.y());
-    gz = (int)((p->pos.z() - _gridMin.z()) * _gridDelta.z());
+    // Determine grid cell id in _grid array
+    gridId = (int)((zGridId * _gridRes.y() + yGridId) * _gridRes.x() + xGridId);
 
-    gs = (int)((gz * _gridRes.y() + gy) * _gridRes.x() + gx);  // WHAT??
-    if (gs >= 0 && gs < _gridTotal) {
-      p->next = _grid[gs];
-      _grid[gs] = n;
-      _gridCnt[gs]++;
+    if (gridId >= 0 && gridId < _gridTotal) {
+      p->next = _grid[gridId];  // TODO: check if it is need
+      _grid[gridId] = n;
+      _gridCnt[gridId]++;
     }
     n++;
   }
 }
 
-void ParticleSystem::gridFindCells(Vec3f p, float radius) {
-  Vec3i sph_min;
+void ParticleSystem::gridFindCells(Vec3f pos, float radius) {
+  Vec3i sphereMin;
 
   // Compute sphere range
-  sph_min.x() = (int)((-radius + p.x() - _gridMin.x()) * _gridDelta.x());
-  sph_min.y() = (int)((-radius + p.y() - _gridMin.y()) * _gridDelta.y());
-  sph_min.z() = (int)((-radius + p.z() - _gridMin.z()) * _gridDelta.z());
-  if (sph_min.x() < 0)
-    sph_min.x() = 0;
-  if (sph_min.y() < 0)
-    sph_min.y() = 0;
-  if (sph_min.z() < 0)
-    sph_min.z() = 0;
+  sphereMin.x() = (int)((-radius + pos.x() - _gridMin.x()) * _gridDelta.x());
+  sphereMin.y() = (int)((-radius + pos.y() - _gridMin.y()) * _gridDelta.y());
+  sphereMin.z() = (int)((-radius + pos.z() - _gridMin.z()) * _gridDelta.z());
+
+  if (sphereMin.x() < 0)
+    sphereMin.x() = 0;
+  if (sphereMin.y() < 0)
+    sphereMin.y() = 0;
+  if (sphereMin.z() < 0)
+    sphereMin.z() = 0;
 
   _gridCell[0] =
-  (int)((sph_min.z() * _gridRes.y() + sph_min.y()) * _gridRes.x() +
-        sph_min.x());
+  (int)((sphereMin.z() * _gridRes.y() + sphereMin.y()) * _gridRes.x() +
+        sphereMin.x());
   _gridCell[1] = _gridCell[0] + 1;
-  _gridCell[2] = (int)(_gridCell[0] + _gridRes.x());
+  _gridCell[2] = (int)(_gridCell[0] + _gridRes.x());  // like y + 1
   _gridCell[3] = _gridCell[2] + 1;
 
-  if (sph_min.z() + 1 < _gridRes.z()) {
-    _gridCell[4] = (int)(_gridCell[0] + _gridRes.y() * _gridRes.x());
+  if (sphereMin.z() + 1 < _gridRes.z()) {  // if not cell with max z
+    _gridCell[4] =
+    (int)(_gridCell[0] + _gridRes.y() * _gridRes.x());  // like z + 1
     _gridCell[5] = _gridCell[4] + 1;
-    _gridCell[6] = (int)(_gridCell[4] + _gridRes.x());
-    _gridCell[7] = _gridCell[6] + 1;
+    _gridCell[6] = (int)(_gridCell[4] + _gridRes.x());  // like y + 1
+    _gridCell[7] = _gridCell[6] + 1;                    // like x + 1
   }
-  if (sph_min.x() + 1 >= _gridRes.x()) {
+
+  if (sphereMin.x() + 1 >= _gridRes.x()) {  // if cell with max x
     _gridCell[1] = -1;
     _gridCell[3] = -1;
     _gridCell[5] = -1;
     _gridCell[7] = -1;
   }
-  if (sph_min.y() + 1 >= _gridRes.y()) {
+
+  if (sphereMin.y() + 1 >= _gridRes.y()) {  // if cell with max y
     _gridCell[2] = -1;
     _gridCell[3] = -1;
     _gridCell[6] = -1;
