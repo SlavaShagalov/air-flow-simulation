@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <cmath>
 
+#include <Domains/Applied/constants.h>
+
 #include <Domains/Applied/Visitors/base_draw_visitor.h>
 #include <Domains/Applied/Visitors/base_transform_visitor.h>
 

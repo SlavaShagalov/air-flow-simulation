@@ -177,6 +177,7 @@ HEADERS += \
 	Domains/Applied/Visitors/base_transform_visitor.h \
 	Domains/Applied/Visitors/draw_visitor.h \
 	Domains/Applied/Visitors/transform_visitor.h \
+	Domains/Applied/constants.h \
 	Domains/Applied/global_types.h \
 	Domains/Applied/utils.h \
 	Domains/Ui/Qt/Drawer/qt_drawer.h \

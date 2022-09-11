@@ -285,7 +285,7 @@ void ParticleSystem::advance() {
       accel.z() += adj * norm.z();
     }
 
-    // Leapfrog Integration ----------------------------
+    // Leapfrog Integration
     vnext = accel;
     vnext *= _dt;
     vnext += p->vel;  // v(t+1/2) = v(t-1/2) + a(t) dt
@@ -322,13 +322,13 @@ void ParticleSystem::computeKernels() {
 
   _R2 = _param[SMOOTH_RADIUS] * _param[SMOOTH_RADIUS];
   _Poly6Kern =
-  315.0f / (64.0f * 3.141592 *
-            pow(_param[SMOOTH_RADIUS], 9));  // Wpoly6 kernel (denominator
-                                             // part) - 2003 Muller, p.4
+  315.0f /
+  (64.0f * PI * pow(_param[SMOOTH_RADIUS], 9));  // Wpoly6 kernel (denominator
+                                                 // part) - 2003 Muller, p.4
   _SpikyKern =
-  -45.0f / (3.141592 * pow(_param[SMOOTH_RADIUS],
-                           6));  // Laplacian of viscocity (denominator): PI h^6
-  _LapKern = 45.0f / (3.141592 * pow(_param[SMOOTH_RADIUS], 6));
+  -45.0f / (PI * pow(_param[SMOOTH_RADIUS],
+                     6));  // Laplacian of viscocity (denominator): PI h^6
+  _LapKern = 45.0f / (PI * pow(_param[SMOOTH_RADIUS], 6));
 }
 
 void ParticleSystem::createExample(float xMin, float xMax, float yMin,
