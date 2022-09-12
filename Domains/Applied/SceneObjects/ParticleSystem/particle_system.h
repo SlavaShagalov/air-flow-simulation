@@ -141,14 +141,12 @@ private:
   Vec3f _gridSize;  // physical size in each axis
   Vec3f _gridDelta;
   float _gridCellSize;
-  int _gridCell[27];
+  int _gridCell[8];
 
   // Neighbor Table
   unsigned short _neighborTable[65536];
   unsigned short _neighbor[65536][MAX_NEIGHBOR];
   float _neighborDist[65536][MAX_NEIGHBOR];
-
-  static int _pCurr;  // ?
 
 private:
   friend class DrawVisitor;

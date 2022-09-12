@@ -9,8 +9,6 @@
 #define EPSILON 0.00001f  // for collision detection
 #define RTOD double(180.0) / M_PI
 
-int ParticleSystem::_pCurr = -1;
-
 ParticleSystem::ParticleSystem(std::shared_ptr<BaseObject> model)
     : _obstacle(model), _particles(NULL), _nParticles(0) {}
 
@@ -18,7 +16,6 @@ void ParticleSystem::initialize(int nParticles) {
   allocParticles(nParticles);  // create place for n particles
 
   _gridRes.set(0, 0, 0);
-  _pCurr = -1;
   _time = 0;
 
   //  _dt = 0.1;
@@ -86,6 +83,39 @@ void ParticleSystem::initialize(int nParticles) {
 
   //   _param[EXT_STIFF] = 10000.0;
   _param[EXT_STIFF] = 20000;
+}
+
+void ParticleSystem::createExample(float xMin, float xMax, float yMin,
+                                   float yMax, float zMin, float zMax) {
+  _vec[VOL_MIN].set(xMin, yMin, zMin);
+  _vec[VOL_MAX].set(xMax, yMax, zMax);
+
+  _vec[INIT_MIN].set(xMin, yMin, zMin);
+  _vec[INIT_MAX].set(xMax, yMax, zMax);
+
+  // emit
+  _vec[EMIT_POS].set(xMax, yMin + 10, zMin + 10);
+  _vec[EMIT_RATE].set(1, 4, 0);  // default 1, 4, 0
+  _vec[EMIT_ANG].set(0, 0, 0);
+
+  computeKernels();
+
+  _param[SIM_SIZE] =
+  _param[SIM_SCALE] * (_vec[VOL_MAX].z() - _vec[VOL_MIN].z());
+
+  _param[P_DIST] = pow(_param[P_MASS] / _param[REST_DENSITY], 1 / 3.0);
+
+  float ss = _param[P_DIST] * 0.87 / _param[SIM_SCALE];
+  //  std::cout << "Spacing: %f " << ss << std::endl;
+
+  addVolume(_vec[INIT_MIN], _vec[INIT_MAX],
+            ss);  // Create the particles
+
+  float cell_size = _param[SMOOTH_RADIUS] * 2.0;  // Grid cell size (2r)
+  gridSetup(_vec[VOL_MIN], _vec[VOL_MAX], _param[SIM_SCALE], cell_size,
+            1.0);  // Setup grid
+
+  gridInsertParticles();
 }
 
 int ParticleSystem::addPointReuse() {
@@ -329,38 +359,6 @@ void ParticleSystem::computeKernels() {
   -45.0f / (PI * pow(_param[SMOOTH_RADIUS],
                      6));  // Laplacian of viscocity (denominator): PI h^6
   _LapKern = 45.0f / (PI * pow(_param[SMOOTH_RADIUS], 6));
-}
-
-void ParticleSystem::createExample(float xMin, float xMax, float yMin,
-                                   float yMax, float zMin, float zMax) {
-  _vec[VOL_MIN].set(xMin, yMin, zMin);
-  _vec[VOL_MAX].set(xMax, yMax, zMax);
-
-  _vec[INIT_MIN].set(xMin, yMin, zMin);
-  _vec[INIT_MAX].set(xMax, yMax, zMax);
-
-  _vec[EMIT_POS].set(xMax, yMin + 10, zMin + 10);
-  _vec[EMIT_RATE].set(1, 4, 0);  // default 1, 4, 0
-  _vec[EMIT_ANG].set(0, 0, 0);
-
-  computeKernels();
-
-  _param[SIM_SIZE] =
-  _param[SIM_SCALE] * (_vec[VOL_MAX].z() - _vec[VOL_MIN].z());
-
-  _param[P_DIST] = pow(_param[P_MASS] / _param[REST_DENSITY], 1 / 3.0);
-
-  float ss = _param[P_DIST] * 0.87 / _param[SIM_SCALE];
-  //  std::cout << "Spacing: %f " << ss << std::endl;
-
-  addVolume(_vec[INIT_MIN], _vec[INIT_MAX],
-            ss);  // Create the particles
-
-  float cell_size = _param[SMOOTH_RADIUS] * 2.0;  // Grid cell size (2r)
-  gridSetup(_vec[VOL_MIN], _vec[VOL_MAX], _param[SIM_SCALE], cell_size,
-            1.0);  // Setup grid
-
-  gridInsertParticles();
 }
 
 // Compute Pressures - Using spatial grid, and also create neighbor table
