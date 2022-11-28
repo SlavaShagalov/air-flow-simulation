@@ -3,10 +3,10 @@
 
 #include "invisible_object.h"
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 
-#include <Domains/Applied/Visitors/base_draw_visitor.h>
-#include <Domains/Applied/Visitors/base_transform_visitor.h>
+#include <App/Applied/Visitors/base_draw_visitor.h>
+#include <App/Applied/Visitors/base_transform_visitor.h>
 
 class Camera : public InvisibleObject {
 public:

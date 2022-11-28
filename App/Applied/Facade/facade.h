@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include <Domains/Applied/Managers/main_manager.h>
-#include <Domains/Applied/Commands/base_command.h>
+#include <App/Applied/Managers/main_manager.h>
+#include <App/Applied/Commands/base_command.h>
 
 class Facade {
 private:

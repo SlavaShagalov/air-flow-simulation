@@ -1,6 +1,6 @@
 #include "wireframe_model_file_loader.h"
 
-#include <Domains/Applied/Exceptions/load_exceptions.h>
+#include <App/Applied/Exceptions/load_exceptions.h>
 
 void WireframeModelFileLoader::openFile(const std::string& src_name) {
   _srcFile = std::make_shared<std::ifstream>(src_name);

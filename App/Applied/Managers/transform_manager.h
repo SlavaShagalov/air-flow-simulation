@@ -3,9 +3,9 @@
 
 #include "base_manager.h"
 
-#include <Domains/Applied/SceneObjects/base_object.h>
+#include <App/Applied/SceneObjects/base_object.h>
 
-#include <Domains/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
+#include <App/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
 
 class TransformManager : public BaseManager {
 public:

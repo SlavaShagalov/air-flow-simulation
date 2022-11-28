@@ -3,7 +3,7 @@
 
 #include "matrix.h"
 
-#include <Domains/Applied/Containers/matrix/errors/errors.hpp>
+#include <App/Applied/Containers/matrix/errors/errors.hpp>
 
 template <typename Type>
 std::shared_ptr<typename Matrix<Type>::MatrixRow[]>

@@ -3,12 +3,12 @@
 #include <fstream>
 #include <QDebug>
 
-#include <Domains/Applied/Load/Directors/CameraDirector/camera_load_director.h>
+#include <App/Applied/Load/Directors/CameraDirector/camera_load_director.h>
 
-#include <Domains/Applied/Load/Directors/ModelDirector/polygonal_model_load_director.h>
-#include <Domains/Applied/Load/Directors/ModelDirector/wireframe_model_load_director.h>
+#include <App/Applied/Load/Directors/ModelDirector/polygonal_model_load_director.h>
+#include <App/Applied/Load/Directors/ModelDirector/wireframe_model_load_director.h>
 
-#include <Domains/Applied/Exceptions/load_exceptions.h>
+#include <App/Applied/Exceptions/load_exceptions.h>
 
 #define CAMERA_DIRECTOR_ID 1
 #define WIREFRAME_MODEL_DIRECTOR_ID 2

@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include <Domains/Applied/SceneObjects/camera.h>
+#include <App/Applied/SceneObjects/camera.h>
 
 class FileCameraBuilder : public CameraBuilder {
 public:

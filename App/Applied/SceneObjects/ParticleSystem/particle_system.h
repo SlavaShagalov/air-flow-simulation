@@ -7,19 +7,19 @@
 #include <cstdlib>
 #include <cmath>
 
-#include <Domains/Applied/constants.h>
+#include <App/Applied/constants.h>
 
-#include <Domains/Applied/Visitors/base_draw_visitor.h>
-#include <Domains/Applied/Visitors/base_transform_visitor.h>
+#include <App/Applied/Visitors/base_draw_visitor.h>
+#include <App/Applied/Visitors/base_transform_visitor.h>
 
-#include <Domains/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 
-#include <Domains/Applied/SceneObjects/camera.h>
-#include <Domains/Applied/SceneObjects/Model/polygonal_model.h>
+#include <App/Applied/SceneObjects/camera.h>
+#include <App/Applied/SceneObjects/Model/polygonal_model.h>
 #include "particle.h"
 
-#include "Domains/Applied/Drawer/drawer.h"
+#include "App/Applied/Drawer/drawer.h"
 
 // Scalar params
 #define SIM_SIZE 4

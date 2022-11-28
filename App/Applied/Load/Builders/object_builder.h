@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include <Domains/Applied/SceneObjects/base_object.h>
+#include <App/Applied/SceneObjects/base_object.h>
 
-#include <Domains/Applied/Primitives/Edge/edge.h>
+#include <App/Applied/Primitives/Edge/edge.h>
 
 class ObjectBuilder {
 public:

@@ -4,7 +4,7 @@
 
 #include <utility>
 
-#include <Domains/Applied/SceneObjects/base_object.h>
+#include <App/Applied/SceneObjects/base_object.h>
 
 void Scene::addObject(const std::shared_ptr<BaseObject>& object) {
   //  qDebug() << "Scene::addObject()";

@@ -7,10 +7,10 @@
 
 #include <QDebug>
 
-#include <Domains/Applied/SceneObjects/base_object.h>
-#include <Domains/Applied/SceneObjects/camera.h>
+#include <App/Applied/SceneObjects/base_object.h>
+#include <App/Applied/SceneObjects/camera.h>
 
-#include <Domains/Applied/Scene/scene.h>
+#include <App/Applied/Scene/scene.h>
 
 using Iterator = std::vector<std::shared_ptr<BaseObject>>::iterator;
 

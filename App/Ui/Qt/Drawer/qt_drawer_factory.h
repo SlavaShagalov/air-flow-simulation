@@ -4,7 +4,7 @@
 #include <memory>
 #include <QGraphicsScene>
 
-#include <Domains/Applied/Drawer/drawer.h>
+#include <App/Applied/Drawer/drawer.h>
 
 class QtDrawerFactory : public DrawerFactory {
 public:

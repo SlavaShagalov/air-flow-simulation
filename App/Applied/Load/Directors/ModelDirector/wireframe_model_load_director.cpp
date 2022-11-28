@@ -2,8 +2,8 @@
 
 #include <QDebug>
 
-#include <Domains/Applied/Load/Builders/Model/file_wireframe_model_builder.h>
-#include <Domains/Applied/Load/Loaders/ModelLoader/wireframe_model_file_loader.h>
+#include <App/Applied/Load/Builders/Model/file_wireframe_model_builder.h>
+#include <App/Applied/Load/Loaders/ModelLoader/wireframe_model_file_loader.h>
 
 WireframeModelLoadDirector::WireframeModelLoadDirector() {
   _builder = std::make_shared<FileWireframeModelBuilder>();

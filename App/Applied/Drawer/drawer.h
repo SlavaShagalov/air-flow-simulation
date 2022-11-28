@@ -4,9 +4,9 @@
 #include <QPolygon>
 #include <memory>
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 
-#include <Domains/Applied/Color/color.h>
+#include <App/Applied/Color/color.h>
 
 class BaseDrawer {
 public:

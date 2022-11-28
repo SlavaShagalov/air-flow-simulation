@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include <Domains/Applied/Containers/matrix/iterator/const_matrix_iterator.h>
-#include <Domains/Applied/Containers/matrix/iterator/matrix_iterator.h>
+#include <App/Applied/Containers/matrix/iterator/const_matrix_iterator.h>
+#include <App/Applied/Containers/matrix/iterator/matrix_iterator.h>
 
 #include "matrix_base.h"
 

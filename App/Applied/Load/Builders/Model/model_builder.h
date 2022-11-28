@@ -1,7 +1,7 @@
 #ifndef MODEL_BUILDER_H
 #define MODEL_BUILDER_H
 
-#include <Domains/Applied/Load/Builders/object_builder.h>
+#include <App/Applied/Load/Builders/object_builder.h>
 
 class ModelBuilder : public ObjectBuilder {
 public:

@@ -1,6 +1,6 @@
 #include "solution_drawer_factory.h"
 
-#include <Domains/Applied/Exceptions/load_exceptions.h>
+#include <App/Applied/Exceptions/load_exceptions.h>
 
 std::shared_ptr<DrawerFactory>
 SolutionDrawerFactory::createFactory(std::string id) {

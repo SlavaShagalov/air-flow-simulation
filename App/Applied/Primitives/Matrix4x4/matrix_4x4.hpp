@@ -9,8 +9,8 @@
 #include <type_traits>
 #include <utility>
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
-#include <Domains/Applied/Primitives/Vector4D/vector_4d.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector4D/vector_4d.hpp>
 
 template <typename T>
 class Matrix4x4;

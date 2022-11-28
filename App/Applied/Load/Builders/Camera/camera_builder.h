@@ -1,7 +1,7 @@
 #ifndef CAMERA_BUILDER_H
 #define CAMERA_BUILDER_H
 
-#include <Domains/Applied/Load/Builders/object_builder.h>
+#include <App/Applied/Load/Builders/object_builder.h>
 
 class CameraBuilder : public ObjectBuilder {
 public:

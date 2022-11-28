@@ -3,7 +3,7 @@
 
 #include "model_load_director.h"
 
-#include <Domains/Applied/SceneObjects/Model/polygonal_model.h>
+#include <App/Applied/SceneObjects/Model/polygonal_model.h>
 
 class PolygonalModelLoadDirector : public ModelLoadDirector {
 public:

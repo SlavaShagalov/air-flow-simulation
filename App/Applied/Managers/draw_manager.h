@@ -3,11 +3,11 @@
 
 #include "base_manager.h"
 
-#include <Domains/Applied/Drawer/drawer.h>
-#include <Domains/Applied/SceneObjects/camera.h>
-#include <Domains/Applied/Scene/scene.h>
+#include <App/Applied/Drawer/drawer.h>
+#include <App/Applied/SceneObjects/camera.h>
+#include <App/Applied/Scene/scene.h>
 
-#include <Domains/Applied/global_types.h>
+#include <App/Applied/global_types.h>
 
 class DrawManager : public BaseManager {
 public:

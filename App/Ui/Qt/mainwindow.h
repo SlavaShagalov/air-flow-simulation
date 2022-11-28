@@ -11,8 +11,8 @@
 #include <QWheelEvent>
 #include <QTimer>
 
-#include <Domains/Applied/Facade/facade.h>
-#include <Domains/Applied/Drawer/drawer.h>
+#include <App/Applied/Facade/facade.h>
+#include <App/Applied/Drawer/drawer.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

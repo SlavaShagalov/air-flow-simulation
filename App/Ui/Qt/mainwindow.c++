@@ -6,34 +6,34 @@
 #include <QMessageBox>
 #include <QMainWindow>
 
-#include <Domains/Applied/Commands/CameraCommands/add_camera_command.h>
-#include <Domains/Applied/Commands/CameraCommands/load_camera_command.h>
-#include <Domains/Applied/Commands/CameraCommands/rotate_camera_command.h>
-#include <Domains/Applied/Commands/CameraCommands/set_cur_camera_command.h>
-#include <Domains/Applied/Commands/ModelCommands/add_model_command.h>
-#include <Domains/Applied/Commands/ModelCommands/load_model_command.h>
-#include <Domains/Applied/Commands/ModelCommands/load_polygonal_model_command.h>
-#include <Domains/Applied/Commands/ModelCommands/move_model_command.h>
-#include <Domains/Applied/Commands/ModelCommands/remove_model_command.h>
-#include <Domains/Applied/Commands/ModelCommands/rotate_model_command.h>
-#include <Domains/Applied/Commands/ModelCommands/scale_model_command.h>
-#include <Domains/Applied/Commands/SceneCommands/draw_scene_command.h>
-#include <Domains/Applied/Commands/SceneCommands/get_cur_camera_command.h>
-#include <Domains/Applied/Commands/SceneCommands/get_object_command.h>
-#include <Domains/Applied/Commands/SceneCommands/get_scene_command.h>
-#include <Domains/Applied/Commands/SceneCommands/get_scene_command.h>
-#include <Domains/Applied/Commands/LightCommands/add_light_command.hpp>
+#include <App/Applied/Commands/CameraCommands/add_camera_command.h>
+#include <App/Applied/Commands/CameraCommands/load_camera_command.h>
+#include <App/Applied/Commands/CameraCommands/rotate_camera_command.h>
+#include <App/Applied/Commands/CameraCommands/set_cur_camera_command.h>
+#include <App/Applied/Commands/ModelCommands/add_model_command.h>
+#include <App/Applied/Commands/ModelCommands/load_model_command.h>
+#include <App/Applied/Commands/ModelCommands/load_polygonal_model_command.h>
+#include <App/Applied/Commands/ModelCommands/move_model_command.h>
+#include <App/Applied/Commands/ModelCommands/remove_model_command.h>
+#include <App/Applied/Commands/ModelCommands/rotate_model_command.h>
+#include <App/Applied/Commands/ModelCommands/scale_model_command.h>
+#include <App/Applied/Commands/SceneCommands/draw_scene_command.h>
+#include <App/Applied/Commands/SceneCommands/get_cur_camera_command.h>
+#include <App/Applied/Commands/SceneCommands/get_object_command.h>
+#include <App/Applied/Commands/SceneCommands/get_scene_command.h>
+#include <App/Applied/Commands/SceneCommands/get_scene_command.h>
+#include <App/Applied/Commands/LightCommands/add_light_command.hpp>
 
-#include <Domains/Applied/Commands/ParticleSystemCommands/add_particle_system_command.hpp>
-#include <Domains/Applied/Commands/ParticleSystemCommands/remove_particle_system_command.hpp>
-#include <Domains/Applied/Drawer/solution_drawer_factory.h>
-#include <Domains/Applied/Exceptions/base_exception.h>
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
-#include <Domains/Applied/SceneObjects/Model/polygonal_model.h>
-#include <Domains/Applied/SceneObjects/Model/wireframe_model.h>
-#include <Domains/Applied/SceneObjects/ParticleSystem/particle_system.h>
+#include <App/Applied/Commands/ParticleSystemCommands/add_particle_system_command.hpp>
+#include <App/Applied/Commands/ParticleSystemCommands/remove_particle_system_command.hpp>
+#include <App/Applied/Drawer/solution_drawer_factory.h>
+#include <App/Applied/Exceptions/base_exception.h>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/SceneObjects/Model/polygonal_model.h>
+#include <App/Applied/SceneObjects/Model/wireframe_model.h>
+#include <App/Applied/SceneObjects/ParticleSystem/particle_system.h>
 
-#include <Domains/Ui/Qt/Drawer/qt_drawer_factory.h>
+#include <App/Ui/Qt/Drawer/qt_drawer_factory.h>
 
 MainWindow::MainWindow(QApplication* app, QWidget* parent)
     : QMainWindow(parent), _ui(new Ui::MainWindow), _app(app) {

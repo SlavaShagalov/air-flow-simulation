@@ -3,11 +3,11 @@
 
 #include "file_model_builder.h"
 
-#include <Domains/Applied/SceneObjects/base_object.h>
+#include <App/Applied/SceneObjects/base_object.h>
 
-#include <Domains/Applied/Primitives/Edge/edge.h>
+#include <App/Applied/Primitives/Edge/edge.h>
 
-#include <Domains/Applied/SceneObjects/Model/wireframe_model_components.h>
+#include <App/Applied/SceneObjects/Model/wireframe_model_components.h>
 
 class FileWireframeModelBuilder : public FileModelBuilder {
 public:

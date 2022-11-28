@@ -1,8 +1,8 @@
-#include <Domains/Applied/Managers/load_manager.h>
+#include <App/Applied/Managers/load_manager.h>
 
 #include <QDebug>
 
-#include <Domains/Applied/Solutions/load_director_solution.h>
+#include <App/Applied/Solutions/load_director_solution.h>
 
 std::shared_ptr<BaseObject> LoadManager::load(const std::string& fileName,
                                               size_t directorId) {

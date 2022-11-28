@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <Domains/Applied/Primitives/Point2D/point_2d.hpp>
+#include <App/Applied/Primitives/Point2D/point_2d.hpp>
 
 template <typename T> class Vector2D;
 

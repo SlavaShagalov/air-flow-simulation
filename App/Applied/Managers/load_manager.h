@@ -5,9 +5,9 @@
 
 #include <memory>
 
-#include <Domains/Applied/SceneObjects/base_object.h>
+#include <App/Applied/SceneObjects/base_object.h>
 
-#include <Domains/Applied/Load/Directors/base_load_director.h>
+#include <App/Applied/Load/Directors/base_load_director.h>
 
 class LoadManager : public BaseManager {
 public:

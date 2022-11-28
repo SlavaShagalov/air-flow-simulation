@@ -1,7 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include <Domains/Applied/SceneObjects/visible_object.h>
+#include <App/Applied/SceneObjects/visible_object.h>
 
 class Model : public VisibleObject {
 public:

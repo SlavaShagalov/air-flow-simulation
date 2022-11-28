@@ -1,6 +1,6 @@
 #include "file_polygon_model_builder.h"
 
-#include <Domains/Applied/SceneObjects/Model/wireframe_model.h>
+#include <App/Applied/SceneObjects/Model/wireframe_model.h>
 
 FilePolygonalModelBuilder::FilePolygonalModelBuilder() {}
 

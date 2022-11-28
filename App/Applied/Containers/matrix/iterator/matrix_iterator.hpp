@@ -3,7 +3,7 @@
 
 #include "matrix_iterator.h"
 
-#include <Domains/Applied/Containers/matrix/errors/errors.hpp>
+#include <App/Applied/Containers/matrix/errors/errors.hpp>
 
 template <typename Type>
 MatrixIterator<Type>::MatrixIterator()

@@ -1,10 +1,10 @@
 #include "transform_visitor.h"
 
-#include <Domains/Applied/SceneObjects/Model/polygonal_model.h>
+#include <App/Applied/SceneObjects/Model/polygonal_model.h>
 
-#include <Domains/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
-#include <Domains/Applied/Primitives/Vector4D/vector_4d.hpp>
+#include <App/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector4D/vector_4d.hpp>
 
 void TransformVisitor::visit(WireframeModel& model) {
   //  // transform vertices

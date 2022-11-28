@@ -3,8 +3,8 @@
 
 #include "base_object.h"
 
-#include <Domains/Applied/Visitors/base_draw_visitor.h>
-#include <Domains/Applied/Visitors/base_transform_visitor.h>
+#include <App/Applied/Visitors/base_draw_visitor.h>
+#include <App/Applied/Visitors/base_transform_visitor.h>
 
 class Composite : public BaseObject {
   using Iterator = std::vector<std::shared_ptr<BaseObject>>::iterator;

@@ -5,12 +5,12 @@
 
 #include "base_transform_visitor.h"
 
-#include <Domains/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
+#include <App/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
 
-#include <Domains/Applied/SceneObjects/Model/polygonal_model.h>
-#include <Domains/Applied/SceneObjects/Model/wireframe_model.h>
-#include <Domains/Applied/SceneObjects/camera.h>
-#include <Domains/Applied/SceneObjects/composite.h>
+#include <App/Applied/SceneObjects/Model/polygonal_model.h>
+#include <App/Applied/SceneObjects/Model/wireframe_model.h>
+#include <App/Applied/SceneObjects/camera.h>
+#include <App/Applied/SceneObjects/composite.h>
 
 class TransformVisitor : public BaseTransformVisitor {
 public:

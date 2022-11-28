@@ -6,10 +6,10 @@
 
 #include <memory>
 
-#include <Domains/Applied/Visitors/base_draw_visitor.h>
-#include <Domains/Applied/Visitors/base_transform_visitor.h>
+#include <App/Applied/Visitors/base_draw_visitor.h>
+#include <App/Applied/Visitors/base_transform_visitor.h>
 
-#include <Domains/Applied/Color/color.h>
+#include <App/Applied/Color/color.h>
 
 class DrawVisitor;
 

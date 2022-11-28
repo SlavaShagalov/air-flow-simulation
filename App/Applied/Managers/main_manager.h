@@ -12,7 +12,7 @@
 #include "transform_manager.h"
 #include "manager_creator.h"
 
-#include <Domains/Applied/global_types.h>
+#include <App/Applied/global_types.h>
 
 class MainManager : public BaseManager {
 private:

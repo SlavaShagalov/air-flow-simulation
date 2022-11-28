@@ -1,6 +1,6 @@
 #include "camera_file_loader.h"
 
-#include <Domains/Applied/Exceptions/load_exceptions.h>
+#include <App/Applied/Exceptions/load_exceptions.h>
 
 void CameraFileLoader::openFile(const std::string& srcFileName) {
   _srcFile = std::make_shared<std::ifstream>(srcFileName);

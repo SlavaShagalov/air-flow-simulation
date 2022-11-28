@@ -3,8 +3,8 @@
 
 #include <vector>
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
-#include <Domains/Applied/Primitives/Edge/edge.h>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Edge/edge.h>
 
 class WireframeModelComponents {
 public:

@@ -5,9 +5,9 @@
 
 #include <QDebug>
 
-#include <Domains/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
+#include <App/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
 
-#include <Domains/Applied/Visitors/transform_visitor.h>
+#include <App/Applied/Visitors/transform_visitor.h>
 
 void TransformManager::moveObject(const std::shared_ptr<BaseObject> &object,
                                   const double &dx, const double &dy,

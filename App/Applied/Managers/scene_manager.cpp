@@ -1,6 +1,6 @@
 #include "scene_manager.h"
 
-#include <Domains/Applied/Exceptions/load_exceptions.h>
+#include <App/Applied/Exceptions/load_exceptions.h>
 
 SceneManager::SceneManager() : _scene(std::make_shared<Scene>()) {}
 

@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-#include <Domains/Applied/Commands/base_command.h>
+#include <App/Applied/Commands/base_command.h>
 
 class RemoveParticleSystemCommand : public BaseCommand {
 public:

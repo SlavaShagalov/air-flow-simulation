@@ -3,7 +3,7 @@
 
 #include "invisible_object.h"
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 
 class Light : public InvisibleObject {
 private:

@@ -3,8 +3,8 @@
 
 #include <vector>
 
-#include "Domains/Applied/Primitives/Vector3D/vector_3d.hpp"
-#include <Domains/Applied/Primitives/Face/face.h>
+#include "App/Applied/Primitives/Vector3D/vector_3d.hpp"
+#include <App/Applied/Primitives/Face/face.h>
 
 class PolygonalModelComponents {
 public:

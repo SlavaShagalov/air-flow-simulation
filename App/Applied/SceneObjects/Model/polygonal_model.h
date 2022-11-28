@@ -4,8 +4,8 @@
 #include "model.h"
 #include "polygonal_model_components.h"
 
-#include <Domains/Applied/Visitors/base_draw_visitor.h>
-#include <Domains/Applied/Visitors/base_transform_visitor.h>
+#include <App/Applied/Visitors/base_draw_visitor.h>
+#include <App/Applied/Visitors/base_transform_visitor.h>
 
 class PolygonalModel : public Model {
 public:

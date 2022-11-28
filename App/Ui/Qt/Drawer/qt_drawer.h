@@ -8,13 +8,13 @@
 #include <QGraphicsScene>
 #include <QPen>
 
-#include <Domains/Applied/Drawer/drawer.h>
+#include <App/Applied/Drawer/drawer.h>
 
-#include <Domains/Applied/Color/color.h>
+#include <App/Applied/Color/color.h>
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 
-#include <Domains/Applied/utils.h>
+#include <App/Applied/utils.h>
 
 class QtDrawer : public BaseDrawer {
 public:

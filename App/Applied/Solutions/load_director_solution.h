@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-#include <Domains/Applied/Load/Directors/base_load_director.h>
+#include <App/Applied/Load/Directors/base_load_director.h>
 
 class LoadDirectorSolution {
   using CallBackMap = std::map<size_t, std::shared_ptr<BaseLoadDirector>>;

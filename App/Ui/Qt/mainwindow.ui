@@ -473,7 +473,7 @@
   <customwidget>
    <class>CustomGraphicsView</class>
    <extends>QGraphicsView</extends>
-   <header>Domains/Ui/Qt/custom_graphics_view.h</header>
+   <header>App/Ui/Qt/custom_graphics_view.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

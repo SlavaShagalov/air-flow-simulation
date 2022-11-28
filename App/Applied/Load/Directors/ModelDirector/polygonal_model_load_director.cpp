@@ -8,11 +8,11 @@
 
 #include <QDebug>
 
-#include <Domains/Applied/Load/Loaders/ModelLoader/polygonal_model_file_loader.h>
+#include <App/Applied/Load/Loaders/ModelLoader/polygonal_model_file_loader.h>
 
-#include <Domains/Applied/SceneObjects/Model/polygonal_model.h>
+#include <App/Applied/SceneObjects/Model/polygonal_model.h>
 
-#include <Domains/Applied/Load/Builders/Model/file_polygon_model_builder.h>
+#include <App/Applied/Load/Builders/Model/file_polygon_model_builder.h>
 
 PolygonalModelLoadDirector::PolygonalModelLoadDirector() {
   _builder = std::make_shared<FilePolygonalModelBuilder>();

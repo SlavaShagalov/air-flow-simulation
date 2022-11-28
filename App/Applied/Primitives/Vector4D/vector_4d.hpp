@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 
 template <typename T>
 class Vector4D;

@@ -1,8 +1,8 @@
 #include "camera_load_director.h"
 
-#include <Domains/Applied/Load/Builders/Camera/file_camera_builder.h>
+#include <App/Applied/Load/Builders/Camera/file_camera_builder.h>
 
-#include <Domains/Applied/Load/Loaders/CameraLoader/camera_file_loader.h>
+#include <App/Applied/Load/Loaders/CameraLoader/camera_file_loader.h>
 
 CameraLoadDirector::CameraLoadDirector() {
   _builder = std::make_shared<FileCameraBuilder>();

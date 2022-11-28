@@ -1,10 +1,10 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <Domains/Applied/Containers/matrix/iterator/matrix_iterator.hpp>
-#include <Domains/Applied/SceneObjects/base_object.h>
-#include <Domains/Applied/SceneObjects/composite.h>
-#include <Domains/Applied/SceneObjects/light.h>
+#include <App/Applied/Containers/matrix/iterator/matrix_iterator.hpp>
+#include <App/Applied/SceneObjects/base_object.h>
+#include <App/Applied/SceneObjects/composite.h>
+#include <App/Applied/SceneObjects/light.h>
 #include <memory>
 #include <vector>
 

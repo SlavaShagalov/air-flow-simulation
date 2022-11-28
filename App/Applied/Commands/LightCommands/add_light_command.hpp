@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <Domains/Applied/Commands/base_command.h>
+#include <App/Applied/Commands/base_command.h>
 
 class AddLightCommand : public BaseCommand {
 public:

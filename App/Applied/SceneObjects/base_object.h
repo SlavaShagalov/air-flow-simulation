@@ -5,7 +5,7 @@
 #include <memory>
 #include <QDebug>
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 
 class BaseTransformVisitor;
 class BaseDrawVisitor;

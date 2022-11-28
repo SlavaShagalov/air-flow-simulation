@@ -4,11 +4,11 @@
 #include <memory>
 #include <utility>
 
-#include <Domains/Applied/SceneObjects/base_object.h>
+#include <App/Applied/SceneObjects/base_object.h>
 
-#include <Domains/Applied/Load/Builders/object_builder.h>
+#include <App/Applied/Load/Builders/object_builder.h>
 
-#include <Domains/Applied/Load/Loaders/base_file_loader.h>
+#include <App/Applied/Load/Loaders/base_file_loader.h>
 
 class BaseLoadDirector {
 public:

@@ -3,10 +3,10 @@
 #include <utility>
 #include <memory>
 
-#include <Domains/Applied/Primitives/Vector4D/vector_4d.hpp>
-#include <Domains/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
+#include <App/Applied/Primitives/Vector4D/vector_4d.hpp>
+#include <App/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
 
-#include <Domains/Applied/Visitors/draw_visitor.h>
+#include <App/Applied/Visitors/draw_visitor.h>
 
 void DrawManager::drawScene(const std::shared_ptr<Scene>& scene,
                             const std::shared_ptr<BaseDrawer> drawer,

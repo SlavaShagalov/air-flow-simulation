@@ -3,7 +3,7 @@
 
 #include "scene_command.h"
 
-#include <Domains/Applied/global_types.h>
+#include <App/Applied/global_types.h>
 
 class DrawSceneCommand : public SceneCommand {
 public:

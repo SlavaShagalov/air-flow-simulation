@@ -1,7 +1,7 @@
 #ifndef MODEL_LOAD_DIRECTOR_H
 #define MODEL_LOAD_DIRECTOR_H
 
-#include <Domains/Applied/Load/Directors/base_load_director.h>
+#include <App/Applied/Load/Directors/base_load_director.h>
 
 class ModelLoadDirector : public BaseLoadDirector {
 public:

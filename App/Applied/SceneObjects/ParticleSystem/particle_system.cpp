@@ -1,9 +1,9 @@
-#include <Domains/Applied/SPH/common/common_defs.h>
-#include <Domains/Applied/SceneObjects/ParticleSystem/particle_system.h>
+#include <App/Applied/SPH/common/common_defs.h>
+#include <App/Applied/SceneObjects/ParticleSystem/particle_system.h>
 
 #include <QDebug>
 
-#include <Domains/Applied/SceneObjects/camera.h>
+#include <App/Applied/SceneObjects/camera.h>
 
 #define EPSILON 0.00001f  // for collision detection
 #define RTOD double(180.0) / M_PI

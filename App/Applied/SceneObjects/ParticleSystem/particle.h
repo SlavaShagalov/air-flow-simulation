@@ -1,9 +1,9 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#include <Domains/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 
-#include <Domains/Applied/SPH/common/common_defs.h>
+#include <App/Applied/SPH/common/common_defs.h>
 
 struct Particle {
 public:
