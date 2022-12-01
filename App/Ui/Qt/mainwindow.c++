@@ -38,7 +38,7 @@
 MainWindow::MainWindow(QApplication* app, QWidget* parent)
     : QMainWindow(parent), _ui(new Ui::MainWindow), _app(app) {
   _ui->setupUi(this);
-  _ui->ViewParticleGroupBox->setVisible(false);  // TODO: implement
+  _ui->ViewParticleGroupBox->setVisible(false);
   _ui->lightRadioBtn->setVisible(false);
   _ui->modelPressureCheckBox->setVisible(false);
 
@@ -521,9 +521,9 @@ void MainWindow::_updateScene() {
 void MainWindow::on_loadPolygonalModelBtn_clicked() {
   //  QString fileName = "Data/Models/Polygonal//Triangulated/african_head.obj";
   //  QString fileName = "Data/Models/Polygonal/Triangulated/heart.obj";
-  //  QString fileName = "Data/Models/Polygonal/Triangulated/cube.obj";
+    QString fileName = "Data/Models/Polygonal/Triangulated/cube.obj";
 
-  auto fileName = QFileDialog::getOpenFileName();
+//  auto fileName = QFileDialog::getOpenFileName();
 
   if (fileName.isNull())
     return;

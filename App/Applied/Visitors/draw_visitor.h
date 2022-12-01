@@ -1,5 +1,4 @@
-#ifndef DRAW_VISITOR_H
-#define DRAW_VISITOR_H
+#pragma once
 
 #include <QDebug>
 
@@ -52,5 +51,3 @@ private:
   DrawMode _mode;
   ParticleMode _particleMode;
 };
-
-#endif  // DRAW_VISITOR_H

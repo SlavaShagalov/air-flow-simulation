@@ -1,18 +1,20 @@
 #include <App/Applied/SPH/common/common_defs.h>
 #include <App/Applied/SceneObjects/ParticleSystem/particle_system.h>
+#include <App/Applied/SceneObjects/camera.h>
 
 #include <QDebug>
-
-#include <App/Applied/SceneObjects/camera.h>
+#include <utility>
 
 #define EPSILON 0.00001f  // for collision detection
 #define RTOD double(180.0) / M_PI
 
 ParticleSystem::ParticleSystem(std::shared_ptr<BaseObject> model)
-    : _obstacle(model), _particles(NULL), _nParticles(0) {}
+    : _obstacle(std::move(model)) {
+}
 
 void ParticleSystem::initialize(int nParticles) {
-  allocParticles(nParticles);  // create place for n particles
+  _particles.reserve(nParticles);
+  //  qDebug() << "size = " << _particles.size();
 
   _gridRes.set(0, 0, 0);
   _time = 0;
@@ -49,11 +51,11 @@ void ParticleSystem::initialize(int nParticles) {
   //
   _param[SIM_SCALE] = 0.004;  // unit size
 
-    _param[VISCOSITY] = 0.008;  // custom
+  _param[VISCOSITY] = 0.008;  // custom
   //  _param[VISCOSITY] = 1.81e-5;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
   //  (see
   // wikipedia page on viscosity) 1.81 × 10-5
-//  _param[VISCOSITY] = 0.2;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
+  //  _param[VISCOSITY] = 0.2;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
   //  (see
   //                                 // wikipedia page on viscosity)
 
@@ -82,7 +84,7 @@ void ParticleSystem::initialize(int nParticles) {
 
   //  _param[INT_STIFF] = 1.00;
   _param[INT_STIFF] = 0.50;  // default 0.50
-                             //  _param[INT_STIFF] = 0.30; //   custom
+  //  _param[INT_STIFF] = 0.30; //   custom
 
   //   _param[EXT_STIFF] = 10000.0;
   //  _param[EXT_STIFF] = 20000; // default 20000
@@ -105,7 +107,7 @@ void ParticleSystem::createExample(float xMin, float xMax, float yMin,
   computeKernels();
 
   _param[SIM_SIZE] =
-  _param[SIM_SCALE] * (_vec[VOL_MAX].z() - _vec[VOL_MIN].z());
+      _param[SIM_SCALE] * (_vec[VOL_MAX].z() - _vec[VOL_MIN].z());
 
   _param[P_DIST] = pow(_param[P_MASS] / _param[REST_DENSITY], 1 / 3.0);
 
@@ -122,23 +124,6 @@ void ParticleSystem::createExample(float xMin, float xMax, float yMin,
   gridInsertParticles();
 }
 
-int ParticleSystem::addPointReuse() {
-  int index;
-  Particle* f;
-  if (_nParticles < _maxParticles - 2)
-    f = addParticle(index);
-  else
-    f = randomParticle(index);
-
-  f->force.set(0, 0, 0);
-  f->vel.set(0, 0, 0);
-  f->vel_eval.set(0, 0, 0);
-  f->next = 0x0;
-  f->pressure = 0;
-  f->density = 0;
-  return index;
-}
-
 void ParticleSystem::run() {
   float ss = _param[P_DIST] / _param[SIM_SCALE];  // simulation scale
 
@@ -153,7 +138,9 @@ void ParticleSystem::run() {
   //    Emit(ss);
   //  }
 
-  emitParticles();
+  if (_particles.size() < 2000) {
+    emitParticles();
+  }
 
   gridInsertParticles();
 
@@ -166,15 +153,14 @@ void ParticleSystem::run() {
 
 void ParticleSystem::advance() {
   const auto model = std::dynamic_pointer_cast<PolygonalModel>(_obstacle);
-  const auto& faces = model->components()->faces();
-  const auto& vertices = model->components()->vertices();
+  const auto &faces = model->components()->faces();
+  const auto &vertices = model->components()->vertices();
   Vec3f v1, v2, v3;
   Vec3f normal, p1, p2, pi;
   float A, B, C, D, t, numerator, denominator;
   Vec3f pc1, pc2, pc3;
   float a1, a2, a3, dist;
 
-  Particle *pend, *p;
   Vec3f norm, accel, vnext;
   Vec3f min, max;
   double adj;
@@ -182,7 +168,7 @@ void ParticleSystem::advance() {
   float stiff, damp, speed, diff;
 
   stiff = _param[EXT_STIFF];  // коэффициент жесткости для столкновения со
-                              // стенками и полигонами обьектов
+  // стенками и полигонами обьектов
   damp = _param[EXT_DAMP];
   radius = _param[P_RADIUS];
   min = _vec[VOL_MIN];
@@ -191,21 +177,21 @@ void ParticleSystem::advance() {
 
   Vec3i d = Vec3i((max - min).x(), (max - min).y(), (max - min).z());
 
-  pend = _particles + _nParticles;
-  for (p = _particles; p < pend; p++) {
+  //  pend = _particles + _nParticles;
+  for (auto &p : _particles) {
     // Compute Acceleration
-    accel = p->force * _param[P_MASS];  // Why, a = F / m?
+    accel = p.force * _param[P_MASS];  // Why, a = F / m?
 
     // Velocity limiting
     speed =
-    accel.x() * accel.x() + accel.y() * accel.y() + accel.z() * accel.z();
+        accel.x() * accel.x() + accel.y() * accel.y() + accel.z() * accel.z();
     if (speed > _param[LIMIT] * _param[LIMIT]) {
       accel *= _param[LIMIT] / sqrt(speed);
     }
 
     // Obstacle collision
-    p1 = p->pos, p2 = (p->pos + p->vel_eval);
-    for (const auto& face : faces) {
+    p1 = p.pos, p2 = (p.pos + p.vel_eval);
+    for (const auto &face : faces) {
       v1 = vertices[face.vertex(0)];
       v2 = vertices[face.vertex(1)];
       v3 = vertices[face.vertex(2)];
@@ -224,7 +210,7 @@ void ParticleSystem::advance() {
 
       numerator = A * p1.x() + B * p1.y() + C * p1.z() + D;
       denominator =
-      A * (p1.x() - p2.x()) + B * (p1.y() - p2.y()) + C * (p1.z() - p2.z());
+          A * (p1.x() - p2.x()) + B * (p1.y() - p2.y()) + C * (p1.z() - p2.z());
 
       if (fabs(denominator) < EPSILON)
         continue;
@@ -252,7 +238,7 @@ void ParticleSystem::advance() {
 
       diff = 2 * radius - dist * ss;
       if (diff < 2 * radius && diff > 1e-3) {
-        adj = 2 * stiff * diff - damp * Vec3f::dotProduct(normal, p->vel_eval);
+        adj = 2 * stiff * diff - damp * Vec3f::dotProduct(normal, p.vel_eval);
         accel.x() += adj * normal.x();
         accel.y() += adj * normal.y();
         accel.z() += adj * normal.z();
@@ -260,64 +246,63 @@ void ParticleSystem::advance() {
     }
 
     // Z-axis walls
-    diff = 2 * radius - (p->pos.z() - min.z()) * ss;
+    diff = 2 * radius - (p.pos.z() - min.z()) * ss;
     if (diff > EPSILON) {
       norm.set(-_param[BOUND_Z_MIN_SLOPE], 0, 1.0 - _param[BOUND_Z_MIN_SLOPE]);
 
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p->vel_eval);
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p.vel_eval);
       accel.x() += adj * norm.x();
       accel.y() += adj * norm.y();
       accel.z() += adj * norm.z();
     }
-    diff = 2 * radius - (max.z() - p->pos.z()) * ss;
+    diff = 2 * radius - (max.z() - p.pos.z()) * ss;
     if (diff > EPSILON) {
       norm.set(0, 0, -1);
 
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p->vel_eval);
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p.vel_eval);
       accel.x() += adj * norm.x();
       accel.y() += adj * norm.y();
       accel.z() += adj * norm.z();
     }
 
     // X-axis walls
-    diff = 2 * radius - (p->pos.x() - min.x()) * ss;
+    diff = 2 * radius - (p.pos.x() - min.x()) * ss;
     if (diff > EPSILON) {
       // delete particle
       //      deleteParticle(p - _particles);
 
       // respawn particle
-      p->pos = Vec3f(max.x() - 6 * radius, min.y() + rand() % d.y(),
-                     min.z() + rand() % d.z());
-      p->vel = Vec3f(-5, 0, 0);
-      p->vel_eval = Vec3f(-5, 0, 0);
-      p->age = 0;
+      p.pos = Vec3f(max.x() - 6 * radius, min.y() + rand() % d.y(),
+                    min.z() + rand() % d.z());
+      p.vel = Vec3f(-5, 0, 0);
+      p.vel_eval = Vec3f(-5, 0, 0);
       continue;
     }
-    diff = 2 * radius - (max.x() - p->pos.x()) * ss;
+    diff = 2 * radius - (max.x() - p.pos.x()) * ss;
     if (diff > EPSILON) {
       norm.set(-1, 0, 0);
 
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p->vel_eval);
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p.vel_eval);
       accel.x() += adj * norm.x();
       accel.y() += adj * norm.y();
       accel.z() += adj * norm.z();
     }
 
     // Y-axis walls
-    diff = 2 * radius - (p->pos.y() - min.y()) * ss;
+    diff = 2 * radius - (p.pos.y() - min.y()) * ss;
     if (diff > EPSILON) {
       norm.set(0, 1, 0);
 
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p->vel_eval);
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p.vel_eval);
       accel.x() += adj * norm.x();
       accel.y() += adj * norm.y();
       accel.z() += adj * norm.z();
     }
-    diff = 2 * radius - (max.y() - p->pos.y()) * ss;
+    diff = 2 * radius - (max.y() - p.pos.y()) * ss;
     if (diff > EPSILON) {
       norm.set(0, -1, 0);
 
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p->vel_eval);
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p.vel_eval);
       accel.x() += adj * norm.x();
       accel.y() += adj * norm.y();
       accel.z() += adj * norm.z();
@@ -326,29 +311,29 @@ void ParticleSystem::advance() {
     // Leapfrog Integration
     vnext = accel;
     vnext *= _dt;
-    vnext += p->vel;  // v(t+1/2) = v(t-1/2) + a(t) dt
+    vnext += p.vel;  // v(t+1/2) = v(t-1/2) + a(t) dt
 
-    p->vel_eval = p->vel;
-    p->vel_eval += vnext;
-    p->vel_eval *=
-    0.5;  // v(t+1) = [v(t-1/2) + v(t+1/2)] * 0.5		used to compute forces later
+    p.vel_eval = p.vel;
+    p.vel_eval += vnext;
+    p.vel_eval *= 0.5;  // v(t+1) = [v(t-1/2) + v(t+1/2)] * 0.5
+                        // used to compute forces later
 
-    p->vel = vnext;
+    p.vel = vnext;
     vnext *= _dt / ss;
-    p->pos += vnext;  // p(t+1) = p(t) + v(t+1/2) dt
+    p.pos += vnext;  // p(t+1) = p(t) + v(t+1/2) dt
 
     // set color
     if (_param[CLR_MODE] == 1.0) {
       adj = fabs(vnext.x()) + fabs(vnext.y()) + fabs(vnext.z()) / 7000.0;
       adj = (adj > 1.0) ? 1.0 : adj;
-      p->clr = COLORA(0, adj, adj, 1);
+      p.clr = COLORA(0, adj, adj, 1);
     } else if (_param[CLR_MODE] == 2.0) {
-      float v = 0.5 + (p->pressure / 1500.0);
+      float v = 0.5 + (p.pressure / 1500.0);
       if (v < 0.1)
         v = 0.1;
       if (v > 1.0)
         v = 1.0;
-      p->clr = COLORA(v, 1 - v, 0, 1);
+      p.clr = COLORA(v, 1 - v, 0, 1);
     }
   }
 
@@ -356,8 +341,7 @@ void ParticleSystem::advance() {
 }
 
 void ParticleSystem::emitParticles() {
-  Particle* p;
-  Vec3f dir = { -5, 0, 0 };
+  Vec3f dir = {-5, 0, 0};
   Vec3f pos;
 
   pos.setX(_vec[VOL_MAX].x());
@@ -366,14 +350,13 @@ void ParticleSystem::emitParticles() {
   pos.setZ(_vec[VOL_MIN].z() +
            rand() % (int)(_vec[VOL_MAX].z() - _vec[VOL_MIN].z()));
 
-  int ind;
-  p = addParticle(ind);
-  //  p = (Particle*)GetElem(0, AddPointReuse());
-  p->pos = pos;
-  p->vel = dir;
-  p->vel_eval = dir;
-  p->age = 0;
-  p->clr = COLORA(0, 0, 0, 1);
+  Particle &p = _particles.emplace_back();
+  p.pos = pos;
+  p.vel = dir;
+  p.vel_eval = dir;
+  p.clr = COLORA(0, 0, 0, 1);
+  std::cout << "Emmited particle: " << p.pos << p.vel << std::endl;
+  std::cout << "Particles Size = " << _particles.size() << std::endl;
 }
 
 void ParticleSystem::computeKernels() {
@@ -381,44 +364,45 @@ void ParticleSystem::computeKernels() {
 
   _R2 = _param[SMOOTH_RADIUS] * _param[SMOOTH_RADIUS];
   _Poly6Kern =
-  315.0f /
-  (64.0f * PI * pow(_param[SMOOTH_RADIUS], 9));  // Wpoly6 kernel (denominator
-                                                 // part) - 2003 Muller, p.4
+      315.0f / (64.0f * PI *
+                pow(_param[SMOOTH_RADIUS], 9));  // Wpoly6 kernel (denominator
+  // part) - 2003 Muller, p.4
   _SpikyKern =
-  -45.0f / (PI * pow(_param[SMOOTH_RADIUS],
-                     6));  // Laplacian of viscocity (denominator): PI h^6
+      -45.0f / (PI * pow(_param[SMOOTH_RADIUS],
+                         6));  // Laplacian of viscocity (denominator): PI h^6
   _LapKern = 45.0f / (PI * pow(_param[SMOOTH_RADIUS], 6));
 }
 
 // Compute Pressures - Using spatial grid, and also create neighbor table
 void ParticleSystem::computePressureGrid() {
-  Particle *pend = _particles + _nParticles, *p, *pcurr;
   int pndx;
   float dx, dy, dz, sum, dSqr, c;
   float h = _param[SMOOTH_RADIUS], h2 = h * h;
   float simH = _param[SMOOTH_RADIUS] / _param[SIM_SCALE];
 
   int i = 0;
-  for (p = _particles; p < pend; p++, i++) {
+
+  Particle *pcur;
+  for (auto &p : _particles) {
     sum = 0.0;
     _neighborTable[i] = 0;
 
-    gridFindCells(p->pos, simH);
+    gridFindCells(p.pos, simH);
 
     for (int j = 0; j < 8; j++) {
       if (_gridCell[j] != -1) {
         pndx = _grid[_gridCell[j]];
-        while (pndx != -1) {          // if j-th cell has 1 or more particles
-          pcurr = _particles + pndx;  // get first particle in j neighbor cell
-          if (pcurr == p) {
-            pndx = pcurr->next;  // get next particle in this cell
-            continue;            // ignore itself
+        while (pndx != -1) {           // if j-th cell has 1 or more particles
+          pcur = &(_particles[pndx]);  // get first particle in j neighbor cell
+          if (pcur == &p) {
+            pndx = pcur->next;  // get next particle in this cell
+            continue;           // ignore itself
           }
 
           // dist between particles in cm
-          dx = (p->pos.x() - pcurr->pos.x()) * _param[SIM_SCALE];
-          dy = (p->pos.y() - pcurr->pos.y()) * _param[SIM_SCALE];
-          dz = (p->pos.z() - pcurr->pos.z()) * _param[SIM_SCALE];
+          dx = (p.pos.x() - pcur->pos.x()) * _param[SIM_SCALE];
+          dy = (p.pos.y() - pcur->pos.y()) * _param[SIM_SCALE];
+          dz = (p.pos.z() - pcur->pos.z()) * _param[SIM_SCALE];
           dSqr = (dx * dx + dy * dy + dz * dz);
 
           if (dSqr < h2) {
@@ -431,155 +415,59 @@ void ParticleSystem::computePressureGrid() {
             }
           }
 
-          pndx = pcurr->next;  // get next particle in this cell
+          pndx = pcur->next;  // get next particle in this cell
         }
       }
 
       _gridCell[j] = -1;
     }
 
-    p->density = sum * _param[P_MASS] * _Poly6Kern;
-    p->pressure = (p->density - _param[REST_DENSITY]) * _param[INT_STIFF];
-    p->density = 1.0f / p->density;
+    p.density = sum * _param[P_MASS] * _Poly6Kern;
+    p.pressure = (p.density - _param[REST_DENSITY]) * _param[INT_STIFF];
+    p.density = 1.0f / p.density;
+    ++i;
   }
 }
 
 // Compute Forces - Using spatial grid with saved neighbor table. Fastest.
 void ParticleSystem::computeForceGridNC() {
-  Particle *pend = _particles + _nParticles, *p, *pcur;
   Vec3f force;
   float pterm, vterm, dterm;
   int i = 0;
   float c;
   float dx, dy, dz;
 
-  for (p = _particles; p < pend; p++, i++) {
+  Particle *pcur;
+  for (auto &p : _particles) {
     force.set(0, 0, 0);
 
     for (int j = 0; j < _neighborTable[i]; j++) {
-      pcur = _particles + _neighbor[i][j];
+      pcur = &(_particles[_neighbor[i][j]]);
 
       // dist in cm
-      dx = (p->pos.x() - pcur->pos.x()) * _param[SIM_SCALE];
-      dy = (p->pos.y() - pcur->pos.y()) * _param[SIM_SCALE];
-      dz = (p->pos.z() - pcur->pos.z()) * _param[SIM_SCALE];
+      dx = (p.pos.x() - pcur->pos.x()) * _param[SIM_SCALE];
+      dy = (p.pos.y() - pcur->pos.y()) * _param[SIM_SCALE];
+      dz = (p.pos.z() - pcur->pos.z()) * _param[SIM_SCALE];
 
-      c = (_param[SMOOTH_RADIUS] - _neighborDist[i][j]);
+      c = _param[SMOOTH_RADIUS] - _neighborDist[i][j];
 
-      pterm = -0.5f * c * _SpikyKern * (p->pressure + pcur->pressure) /
+      pterm = -0.5f * c * _SpikyKern * (p.pressure + pcur->pressure) /
               _neighborDist[i][j];
 
-      dterm = c * p->density * pcur->density;
+      dterm = c * p.density * pcur->density;
 
       vterm = _LapKern * _param[VISCOSITY];
 
       force.x() +=
-      (pterm * dx + vterm * (pcur->vel_eval.x() - p->vel_eval.x())) * dterm;
+          (pterm * dx + vterm * (pcur->vel_eval.x() - p.vel_eval.x())) * dterm;
       force.y() +=
-      (pterm * dy + vterm * (pcur->vel_eval.y() - p->vel_eval.y())) * dterm;
+          (pterm * dy + vterm * (pcur->vel_eval.y() - p.vel_eval.y())) * dterm;
       force.z() +=
-      (pterm * dz + vterm * (pcur->vel_eval.z() - p->vel_eval.z())) * dterm;
+          (pterm * dz + vterm * (pcur->vel_eval.z() - p.vel_eval.z())) * dterm;
     }
 
-    p->force = force;
-  }
-}
-
-void ParticleSystem::freeParticles() {
-  free(_particles);
-  _particles = NULL;
-  _nParticles = 0;
-}
-
-void ParticleSystem::reallocParticles(int newSize) {
-  _maxParticles = newSize;
-
-  if (_particles != NULL)
-    free(_particles);
-
-  Particle* new_data = (Particle*)malloc(_maxParticles * sizeof(Particle));
-
-  if (!new_data)
-    qDebug() << "ERROR";
-
-  _particles = new_data;
-  _nParticles = 0;
-}
-
-void ParticleSystem::allocParticles(int nParticles) {
-  _particles = (Particle*)malloc(nParticles * sizeof(Particle));
-  _nParticles = 0;
-  _maxParticles = nParticles;
-  if (!_particles)
-    qDebug() << "ERROR!";
-}
-
-int ParticleSystem::addParticleReuse() {
-  int index;
-  if (_nParticles < _maxParticles - 1)
-    addParticle(index);
-  else
-    randomParticle(index);
-
-  return index;
-}
-
-Particle* ParticleSystem::addParticle(int& index) {
-  if (_nParticles >= _maxParticles) {
-    if (long(_maxParticles) * 2 > ELEM_MAX) {
-      qDebug() << "ERROR";
-    }
-    _maxParticles *= 2;
-
-    Particle* new_data = (Particle*)malloc(_maxParticles * sizeof(Particle));
-
-    if (!new_data)
-      qDebug() << "ERROR!";
-
-    memcpy(new_data, _particles, _nParticles * sizeof(Particle));
-
-    free(_particles);
-    _particles = new_data;
-  }
-
-  _nParticles++;
-  index = _nParticles - 1;
-
-  return _particles + index;
-}
-
-void ParticleSystem::deleteParticle(const int index) {
-  for (int i = index; i < _nParticles - 1; i++) {
-    _particles[i] = _particles[i + 1];
-  }
-
-  _nParticles--;
-}
-
-Particle* ParticleSystem::randomParticle(int& index) {
-  index = _nParticles * rand() / RAND_MAX;  // mb float
-  return _particles + index * sizeof(Particle);
-}
-
-void ParticleSystem::addVolume(Vec3f min, Vec3f max, float spacing) {
-  Vec3f pos;
-  Particle* p;
-  float dx, dy, dz;
-
-  dx = max.x() - min.x();
-  dy = max.y() - min.y();
-  dz = max.z() - min.z();
-
-  for (float z = max.z(); z >= min.z(); z -= spacing) {
-    for (float y = min.y(); y <= max.y(); y += spacing) {
-      for (float x = min.x(); x <= max.x(); x += spacing) {
-        p = getParticle(addParticleReuse());
-        pos.set(x, y, z);
-        p->pos = pos;
-        p->clr =
-        COLORA((x - min.x()) / dx, (y - min.y()) / dy, (z - min.z()) / dz, 1);
-      }
-    }
+    p.force = force;
+    ++i;
   }
 }
 
@@ -623,16 +511,13 @@ void ParticleSystem::gridSetup(Vec3f min, Vec3f max, float sim_scale,
 }
 
 void ParticleSystem::gridInsertParticles() {
-  Particle *pend, *p;
-
+  //  qDebug() << "gridInsertParticles()";
   int gridId;
   int xGridId, yGridId, zGridId;
 
-  pend = _particles + _nParticles;
-
-  // set next = -1
-  for (p = _particles; p < pend; p++)
-    p->next = -1;
+  for (auto &p : _particles) {
+    p.next = -1;
+  }
 
   for (int n = 0; n < _gridTotal; n++) {
     _grid[n] = -1;
@@ -640,22 +525,27 @@ void ParticleSystem::gridInsertParticles() {
   }
 
   int n = 0;
-  for (p = _particles; p < pend; p++) {
+  for (auto &p : _particles) {
     // Determine grid cell id in axis
-    xGridId = (int)((p->pos.x() - _gridMin.x()) * _gridDelta.x());
-    yGridId = (int)((p->pos.y() - _gridMin.y()) * _gridDelta.y());
-    zGridId = (int)((p->pos.z() - _gridMin.z()) * _gridDelta.z());
+    xGridId = (int)((p.pos.x() - _gridMin.x()) * _gridDelta.x());
+    yGridId = (int)((p.pos.y() - _gridMin.y()) * _gridDelta.y());
+    zGridId = (int)((p.pos.z() - _gridMin.z()) * _gridDelta.z());
 
     // Determine grid cell id in _grid array
     gridId = (int)((zGridId * _gridRes.y() + yGridId) * _gridRes.x() + xGridId);
 
     if (gridId >= 0 && gridId < _gridTotal) {
-      p->next = _grid[gridId];  // TODO: check if it is need
+      p.next = _grid[gridId];
       _grid[gridId] = n;
       _gridCnt[gridId]++;
     }
     n++;
   }
+
+  //  auto it = _particles.begin();
+  //  for (int i = 0; i < 10 && it != _particles.end(); ++i, ++it) {
+  //    std::cout << *it << std::endl;
+  //  }
 }
 
 void ParticleSystem::gridFindCells(Vec3f pos, float radius) {
@@ -674,15 +564,15 @@ void ParticleSystem::gridFindCells(Vec3f pos, float radius) {
     sphereMin.z() = 0;
 
   _gridCell[0] =
-  (int)((sphereMin.z() * _gridRes.y() + sphereMin.y()) * _gridRes.x() +
-        sphereMin.x());
+      (int)((sphereMin.z() * _gridRes.y() + sphereMin.y()) * _gridRes.x() +
+            sphereMin.x());
   _gridCell[1] = _gridCell[0] + 1;
   _gridCell[2] = (int)(_gridCell[0] + _gridRes.x());  // like y + 1
   _gridCell[3] = _gridCell[2] + 1;
 
   if (sphereMin.z() + 1 < _gridRes.z()) {  // if not cell with max z
     _gridCell[4] =
-    (int)(_gridCell[0] + _gridRes.y() * _gridRes.x());  // like z + 1
+        (int)(_gridCell[0] + _gridRes.y() * _gridRes.x());  // like z + 1
     _gridCell[5] = _gridCell[4] + 1;
     _gridCell[6] = (int)(_gridCell[4] + _gridRes.x());  // like y + 1
     _gridCell[7] = _gridCell[6] + 1;                    // like x + 1

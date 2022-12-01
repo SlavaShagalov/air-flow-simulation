@@ -1,25 +1,22 @@
 #ifndef PARTICLE_SYSTEM_H
 #define PARTICLE_SYSTEM_H
 
-#include <iostream>
-#include <vector>
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
-
-#include <App/Applied/constants.h>
-
+#include <App/Applied/SceneObjects/Model/polygonal_model.h>
+#include <App/Applied/SceneObjects/camera.h>
 #include <App/Applied/Visitors/base_draw_visitor.h>
 #include <App/Applied/Visitors/base_transform_visitor.h>
+#include <App/Applied/constants.h>
 
 #include <App/Applied/Primitives/Matrix4x4/matrix_4x4.hpp>
 #include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
-
-#include <App/Applied/SceneObjects/camera.h>
-#include <App/Applied/SceneObjects/Model/polygonal_model.h>
-#include "particle.h"
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <vector>
 
 #include "App/Applied/Drawer/drawer.h"
+#include "particle.h"
 
 // Scalar params
 #define SIM_SIZE 4
@@ -65,93 +62,92 @@
 #define ELEM_MAX 2147483640
 
 class ParticleSystem : public VisibleObject {
-public:
+ public:
   ParticleSystem(std::shared_ptr<BaseObject> model);
 
-  ~ParticleSystem() { freeParticles(); }
+  ~ParticleSystem() {
+  }
 
   // control methods
   void initialize(int nmax);
+
   void createExample(float xMin, float xMax, float yMin, float yMax, float zMin,
                      float zMax);
+
   void run();
+
   void advance();
+
   void emitParticles();
 
   // getters
-  virtual Vec3f center() const override { return _center; }
-  virtual Vec3f& center() override { return _center; }
+  virtual Vec3f center() const override {
+    return _center;
+  }
+
+  virtual Vec3f &center() override {
+    return _center;
+  }
 
   void computeKernels();
+
   void computePressureGrid();  // O(kn) - spatial grid
   void computeForceGridNC();   // O(cn) - neighbor table
-
-  //
-  int addPointReuse();
-
-  // new
-  void freeParticles();
-  void reallocParticles(int newSize);
-  void allocParticles(int nParticles);
-
-  int addParticleReuse();
-  Particle* addParticle(int& index);
-  void deleteParticle(const int index);
-  Particle* randomParticle(int& index);
-  Particle* getParticle(int index) { return _particles + index; }
-
-  void addVolume(Vec3f min, Vec3f max, float spacing);
 
   // grid
   void gridSetup(Vec3f min, Vec3f max, float sim_scale, float cell_size,
                  float border);
+
   void gridInsertParticles();
+
   void gridFindCells(Vec3f p, float radius);
 
   // vizitor methods
-  virtual void accept(BaseDrawVisitor& visitor) override {
+  virtual void accept(BaseDrawVisitor &visitor) override {
     visitor.visit(*this);
   }
-  virtual void accept(BaseTransformVisitor& visitor) override {}
 
-private:
-  double _R2, _Poly6Kern, _LapKern,
-  _SpikyKern;  // Kernel functions
+  virtual void accept(BaseTransformVisitor &visitor) override {
+  }
+
+ private:
+  double _R2{}, _Poly6Kern{}, _LapKern{},
+      _SpikyKern{};  // Kernel functions
 
   std::shared_ptr<BaseObject> _obstacle;
 
   // particles
-  Particle* _particles;  // dynamic array is faster than std::vector
-  int _nParticles;
-  int _maxParticles;
+  std::vector<Particle> _particles;
+  int _maxParticles{};
 
   // SPH
-  double _dt;
-  double _time;
+  double _dt{};
+  double _time{};
 
   // Parameters
-  double _param[MAX_PARAM];
+  double _param[MAX_PARAM]{};
   Vec3f _vec[MAX_PARAM];
 
   // Grid
   std::vector<int> _grid;
   std::vector<int> _gridCnt;
-  int _gridTotal;
+  int _gridTotal{};
   Vec3f _gridMin;  // volume of grid (may not match domain volume exactly)
   Vec3f _gridMax;
   Vec3f _gridRes;   // resolution in each axis
   Vec3f _gridSize;  // physical size in each axis
   Vec3f _gridDelta;
-  float _gridCellSize;
-  int _gridCell[8];
+  float _gridCellSize{};
+  int _gridCell[8]{};
 
   // Neighbor Table
-  unsigned short _neighborTable[65536];
-  unsigned short _neighbor[65536][MAX_NEIGHBOR];
-  float _neighborDist[65536][MAX_NEIGHBOR];
+  unsigned short _neighborTable[65536]{};
+  unsigned short _neighbor[65536][MAX_NEIGHBOR]{};
+  float _neighborDist[65536][MAX_NEIGHBOR]{};
 
-private:
+ private:
   friend class DrawVisitor;
+
   friend class TransformVisitor;
 };
 

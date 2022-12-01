@@ -232,8 +232,6 @@ void DrawVisitor::gourandDraw(const PolygonalModel& model) {
 
 void DrawVisitor::visit(const ParticleSystem& ps) {
   //  qDebug() << "DrawVisitor::visit(const ParticleSystem& model)";
-  Particle *dat, *p;
-
   const Mtr4x4f modelView =
   Mtr4x4f::lookAt(_camera->eye(), Vec3f(_camera->center()), _camera->up());
 
@@ -249,11 +247,8 @@ void DrawVisitor::visit(const ParticleSystem& ps) {
   Vec4f tvec;
   Vec3f vel;
 
-  dat = ps._particles;
-  for (int i = 0; i < ps._nParticles; i++) {
-    p = dat;
-
-    Vec3f point = Vec3f(p->pos.x(), p->pos.y(), p->pos.z());
+  for (auto &p : ps._particles) {
+    Vec3f point = Vec3f(p.pos.x(), p.pos.y(), p.pos.z());
 
     point.x() = point.x() / 30.0;
     point.y() = point.y() / 30.0;
@@ -263,12 +258,12 @@ void DrawVisitor::visit(const ParticleSystem& ps) {
     point = Vec3f(tvec[0] / tvec[3], tvec[1] / tvec[3], tvec[2] / tvec[3]);
 
     Vec3f point2;
-    vel = p->vel_eval;
+    vel = p.vel_eval;
     if (vel.length() != 0) {
       vel.normalize();
       //      vel *= 3;
       point2 =
-      Vec3f(p->pos.x() + vel.x(), p->pos.y() + vel.y(), p->pos.z() + vel.z());
+      Vec3f(p.pos.x() + vel.x(), p.pos.y() + vel.y(), p.pos.z() + vel.z());
 
       point2.x() = point2.x() / 30.0;
       point2.y() = point2.y() / 30.0;
@@ -281,14 +276,13 @@ void DrawVisitor::visit(const ParticleSystem& ps) {
     }
 
     Color color =
-    Color(255 * RED(p->clr), 255 * GRN(p->clr), 255 * BLUE(p->clr));
+    Color(255 * RED(p.clr), 255 * GRN(p.clr), 255 * BLUE(p.clr));
 
     if (_particleMode == SPHERE) {
       _drawer->drawSphere(point, color, Vec3f());
     } else {
       _drawer->drawVector(point, point2, color);
     }
-    dat++;
   }
 }
 
