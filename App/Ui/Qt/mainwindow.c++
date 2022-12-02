@@ -1,10 +1,4 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
-
-#include <QDebug>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QMainWindow>
 
 #include <App/Applied/Commands/CameraCommands/add_camera_command.h>
 #include <App/Applied/Commands/CameraCommands/load_camera_command.h>
@@ -21,19 +15,23 @@
 #include <App/Applied/Commands/SceneCommands/get_cur_camera_command.h>
 #include <App/Applied/Commands/SceneCommands/get_object_command.h>
 #include <App/Applied/Commands/SceneCommands/get_scene_command.h>
-#include <App/Applied/Commands/SceneCommands/get_scene_command.h>
-#include <App/Applied/Commands/LightCommands/add_light_command.hpp>
-
-#include <App/Applied/Commands/ParticleSystemCommands/add_particle_system_command.hpp>
-#include <App/Applied/Commands/ParticleSystemCommands/remove_particle_system_command.hpp>
 #include <App/Applied/Drawer/solution_drawer_factory.h>
 #include <App/Applied/Exceptions/base_exception.h>
-#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 #include <App/Applied/SceneObjects/Model/polygonal_model.h>
 #include <App/Applied/SceneObjects/Model/wireframe_model.h>
 #include <App/Applied/SceneObjects/ParticleSystem/particle_system.h>
-
 #include <App/Ui/Qt/Drawer/qt_drawer_factory.h>
+
+#include <App/Applied/Commands/LightCommands/add_light_command.hpp>
+#include <App/Applied/Commands/ParticleSystemCommands/add_particle_system_command.hpp>
+#include <App/Applied/Commands/ParticleSystemCommands/remove_particle_system_command.hpp>
+#include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
+#include <QDebug>
+#include <QFileDialog>
+#include <QMainWindow>
+#include <QMessageBox>
+
+#include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QApplication* app, QWidget* parent)
     : QMainWindow(parent), _ui(new Ui::MainWindow), _app(app) {
@@ -47,7 +45,9 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent)
   _timer.start(1000);  // delay for normal screen size initialization
 }
 
-MainWindow::~MainWindow() { delete _ui; }
+MainWindow::~MainWindow() {
+  delete _ui;
+}
 
 void MainWindow::start() {
   qDebug() << "start()";
@@ -61,6 +61,7 @@ void MainWindow::start() {
   _addDefaultLight();
   _addAxis();
   _updateScene();
+  _buildSimZone();
 
   // test calls
   //  on_loadPolygonalModelBtn_clicked();
@@ -198,7 +199,7 @@ void MainWindow::moveModel(double dx, double dy, double dz) {
 
 void MainWindow::rotateModel(double dx, double dy, double dz) {
   auto rotateModelComand =
-  RotateModelCommand(_model, dx * 0.01, dy * 0.01, dz * 0.01);
+      RotateModelCommand(_model, dx * 0.01, dy * 0.01, dz * 0.01);
 
   try {
     _facade->executeCommand(rotateModelComand);
@@ -222,7 +223,7 @@ void MainWindow::scaleModel(double kx, double ky, double kz) {
 // transform camera methods
 void MainWindow::rotateCamera(double dx, double dy, double dz) {
   auto rotateCameraComand =
-  RotateCameraCommand(_camera, dx * 0.01, dy * 0.01, dz * 0.01);
+      RotateCameraCommand(_camera, dx * 0.01, dy * 0.01, dz * 0.01);
 
   try {
     _facade->executeCommand(rotateCameraComand);
@@ -234,9 +235,9 @@ void MainWindow::rotateCamera(double dx, double dy, double dz) {
 
 //
 void MainWindow::_addDefaultCamera() {
-  Vec3f center = { 0, 0, 0 };
-  Vec3f eye = { 3, 2, 2 };
-  Vec3f up = { 0, 0, 1 };
+  Vec3f center = {0, 0, 0};
+  Vec3f eye = {3, 2, 2};
+  Vec3f up = {0, 0, 1};
 
   auto addCameraCommand = AddCameraCommand(center, eye, up);
   try {
@@ -257,7 +258,7 @@ void MainWindow::_addDefaultCamera() {
 
 void MainWindow::_addDefaultLight() {
   //  Vec3f dir = { -2, -2, -1 };
-  Vec3f dir = { 3, 2, 2 };
+  Vec3f dir = {3, 2, 2};
 
   auto addLightCommand = AddLightCommand(dir);
 
@@ -279,10 +280,11 @@ void MainWindow::_setupDrawing() {
   _ui->customGraphicsView->setScene(_qScene.get());
   _ui->customGraphicsView->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
-//  int minSize =
-//  min(_ui->customGraphicsView->width(), _ui->customGraphicsView->height());
+  //  int minSize =
+  //  min(_ui->customGraphicsView->width(), _ui->customGraphicsView->height());
 
-  _qScene->setSceneRect(0, 0, _ui->customGraphicsView->width(), _ui->customGraphicsView->height());
+  _qScene->setSceneRect(0, 0, _ui->customGraphicsView->width(),
+                        _ui->customGraphicsView->height());
 
   // create drawer
   auto solution = std::make_shared<SolutionDrawerFactory>();
@@ -351,28 +353,44 @@ void MainWindow::_buildSimZone() {
     _zoneId = -1;
   }
 
-  // 1. find min, max points
-  const auto pmodel = std::dynamic_pointer_cast<PolygonalModel>(_model);
-  const auto& vertices = pmodel->components()->vertices();
+  if (_model) {
+    // 1. find min, max points
+    const auto pmodel = std::dynamic_pointer_cast<PolygonalModel>(_model);
+    const auto& vertices = pmodel->components()->vertices();
 
-  _xMax = _xMin = vertices[0].x();
-  _yMax = _yMin = vertices[0].y();
-  _zMax = _zMin = vertices[0].z();
+    _xMax = _xMin = vertices[0].x();
+    _yMax = _yMin = vertices[0].y();
+    _zMax = _zMin = vertices[0].z();
 
-  for (const auto& vertex : vertices) {
-    if (vertex.x() > _xMax)
-      _xMax = vertex.x();
-    if (vertex.y() > _yMax)
-      _yMax = vertex.y();
-    if (vertex.z() > _zMax)
-      _zMax = vertex.z();
-    if (vertex.x() < _xMin)
-      _xMin = vertex.x();
-    if (vertex.y() < _yMin)
-      _yMin = vertex.y();
-    if (vertex.z() < _zMin)
-      _zMin = vertex.z();
+    for (const auto& vertex : vertices) {
+      if (vertex.x() > _xMax)
+        _xMax = vertex.x();
+      if (vertex.y() > _yMax)
+        _yMax = vertex.y();
+      if (vertex.z() > _zMax)
+        _zMax = vertex.z();
+      if (vertex.x() < _xMin)
+        _xMin = vertex.x();
+      if (vertex.y() < _yMin)
+        _yMin = vertex.y();
+      if (vertex.z() < _zMin)
+        _zMin = vertex.z();
+    }
+  } else {
+    _xMin = -0.2;
+    _xMax = 0.2;
+    _yMin = -0.2;
+    _yMax = 0.2;
+    _zMin = -0.2;
+    _zMax = 0.2;
   }
+
+  model_bound.xMin = _xMin * 30;
+  model_bound.xMax = _xMax * 30;
+  model_bound.yMin = _yMin * 30;
+  model_bound.yMax = _yMax * 30;
+  model_bound.zMin = _zMin * 30;
+  model_bound.zMax = _zMax * 30;
 
   float dx = _xMax - _xMin;
   float dy = _yMax - _yMin;
@@ -421,10 +439,10 @@ void MainWindow::_buildSimZone() {
     boundEdges.push_back(Edge(3, 7));
 
     shared_ptr<WireframeModelComponents> comp =
-    std::make_shared<WireframeModelComponents>(boundVerts, boundEdges);
+        std::make_shared<WireframeModelComponents>(boundVerts, boundEdges);
 
     shared_ptr<BaseObject> bound = std::make_shared<WireframeModel>(
-    comp, Vec3f(0, 0, 0), Color(255, 255, 0, 255));
+        comp, Vec3f(0, 0, 0), Color(255, 255, 0, 255));
 
     auto addModelCommand = AddModelCommand(bound);
     _facade->executeCommand(addModelCommand);
@@ -435,13 +453,13 @@ void MainWindow::_buildSimZone() {
 }
 
 void MainWindow::_addAxis() {
-  const Vec3f OX_beg = { 0, 0, 0 };
-  const Vec3f OY_beg = { 0, 0, 0 };
-  const Vec3f OZ_beg = { 0, 0, 0 };
+  const Vec3f OX_beg = {0, 0, 0};
+  const Vec3f OY_beg = {0, 0, 0};
+  const Vec3f OZ_beg = {0, 0, 0};
 
-  const Vec3f OX_end = { 3, 0, 0 };
-  const Vec3f OY_end = { 0, 3, 0 };
-  const Vec3f OZ_end = { 0, 0, 3 };
+  const Vec3f OX_end = {3, 0, 0};
+  const Vec3f OY_end = {0, 3, 0};
+  const Vec3f OZ_end = {0, 0, 3};
 
   // OX axis
   std::vector<Vec3f> vertices;
@@ -450,9 +468,9 @@ void MainWindow::_addAxis() {
   std::vector<Edge> edges;
   edges.push_back(Edge(0, 1));
   shared_ptr<WireframeModelComponents> comp =
-  std::make_shared<WireframeModelComponents>(vertices, edges);
-  shared_ptr<BaseObject> axisModel =
-  std::make_shared<WireframeModel>(comp, Vec3f(0, 0, 0), Color(255, 0, 0, 255));
+      std::make_shared<WireframeModelComponents>(vertices, edges);
+  shared_ptr<BaseObject> axisModel = std::make_shared<WireframeModel>(
+      comp, Vec3f(0, 0, 0), Color(255, 0, 0, 255));
   auto addModelCommand = AddModelCommand(axisModel);
   _facade->executeCommand(addModelCommand);
   _nObjects++;
@@ -464,8 +482,8 @@ void MainWindow::_addAxis() {
   edges.clear();
   edges.push_back(Edge(0, 1));
   comp = std::make_shared<WireframeModelComponents>(vertices, edges);
-  axisModel =
-  std::make_shared<WireframeModel>(comp, Vec3f(0, 0, 0), Color(0, 255, 0, 255));
+  axisModel = std::make_shared<WireframeModel>(comp, Vec3f(0, 0, 0),
+                                               Color(0, 255, 0, 255));
   addModelCommand = AddModelCommand(axisModel);
   _facade->executeCommand(addModelCommand);
   _nObjects++;
@@ -477,8 +495,8 @@ void MainWindow::_addAxis() {
   edges.clear();
   edges.push_back(Edge(0, 1));
   comp = std::make_shared<WireframeModelComponents>(vertices, edges);
-  axisModel =
-  std::make_shared<WireframeModel>(comp, Vec3f(0, 0, 0), Color(0, 0, 255, 255));
+  axisModel = std::make_shared<WireframeModel>(comp, Vec3f(0, 0, 0),
+                                               Color(0, 0, 255, 255));
   addModelCommand = AddModelCommand(axisModel);
   _facade->executeCommand(addModelCommand);
   _nObjects++;
@@ -509,7 +527,7 @@ void MainWindow::_updateScene() {
   //  }
 
   auto drawSceneCommand =
-  DrawSceneCommand(_scene, _drawer, _camera, mode, particleMode);
+      DrawSceneCommand(_scene, _drawer, _camera, mode, particleMode);
   try {
     _facade->executeCommand(drawSceneCommand);
   } catch (BaseException& ex) {
@@ -521,15 +539,15 @@ void MainWindow::_updateScene() {
 void MainWindow::on_loadPolygonalModelBtn_clicked() {
   //  QString fileName = "Data/Models/Polygonal//Triangulated/african_head.obj";
   //  QString fileName = "Data/Models/Polygonal/Triangulated/heart.obj";
-    QString fileName = "Data/Models/Polygonal/Triangulated/cube.obj";
+  QString fileName = "Data/Models/Polygonal/Triangulated/cube.obj";
 
-//  auto fileName = QFileDialog::getOpenFileName();
+  //  auto fileName = QFileDialog::getOpenFileName();
 
   if (fileName.isNull())
     return;
 
   auto loadModelCommand =
-  LoadPolygonalModelCommand(_model, fileName.toUtf8().data());
+      LoadPolygonalModelCommand(_model, fileName.toUtf8().data());
   try {
     _facade->executeCommand(loadModelCommand);
   } catch (const BaseException& ex) {
@@ -558,7 +576,7 @@ void MainWindow::on_loadPolygonalModelBtn_clicked() {
 void MainWindow::on_runSimBtn_clicked() {
   if (!_simRunned) {
     if (_psysId == -1) {
-      psys = std::make_shared<ParticleSystem>(_model);
+      psys = std::make_shared<ParticleSystem>(_model, model_bound);
 
       auto addParticleSystemCommand = AddParticleSystemCommand(psys);
       _facade->executeCommand(addParticleSystemCommand);
@@ -680,4 +698,5 @@ void MainWindow::on_delModelBtn_clicked() {
   //  _updateScene();
 }
 
-void MainWindow::on_zoneViewCheckBox_stateChanged(int arg1) {}
+void MainWindow::on_zoneViewCheckBox_stateChanged(int arg1) {
+}

@@ -14,6 +14,8 @@
 #include <App/Applied/Facade/facade.h>
 #include <App/Applied/Drawer/drawer.h>
 
+#include "global_types.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -116,6 +118,7 @@ private:
 
   // Simulation Zone
   float _xMax, _yMax, _zMax, _xMin, _yMin, _zMin;
+  Bound3D model_bound;
   int _zoneId = -1;
 
 protected:

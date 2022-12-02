@@ -16,54 +16,14 @@
 #include <vector>
 
 #include "App/Applied/Drawer/drawer.h"
+#include "global_types.h"
 #include "particle.h"
 
-// Scalar params
-#define SIM_SIZE 4
-#define SIM_SCALE 5
-#define VISCOSITY 6
-#define REST_DENSITY 7
-#define P_MASS 8
-#define P_RADIUS 9
-#define P_DIST 10
-#define SMOOTH_RADIUS 11
-#define INT_STIFF 12
-#define EXT_STIFF 13
-#define EXT_DAMP 14
-#define LIMIT 15
-#define BOUND_Z_MIN_SLOPE 16
-#define FORCE_X_MAX_SIN 17
-#define FORCE_X_MIN_SIN 18
-#define MAX_FRAC 19
-#define CLR_MODE 20
-
-// Vector params
-#define VOL_MIN 7
-#define VOL_MAX 8
-#define INIT_MIN 9
-#define INIT_MAX 10
-
 #define MAX_NEIGHBOR 80
-#define MAX_PARAM 21
-
-// Scalar params
-#define POINT_GRAV 2
-#define PLANE_GRAV 3
-
-// Vector params
-#define EMIT_POS 0
-#define EMIT_ANG 1
-#define EMIT_DANG 2
-#define EMIT_SPREAD 3
-#define EMIT_RATE 4
-#define POINT_GRAV_POS 5
-#define PLANE_GRAV_DIR 6
-
-#define ELEM_MAX 2147483640
 
 class ParticleSystem : public VisibleObject {
  public:
-  ParticleSystem(std::shared_ptr<BaseObject> model);
+  ParticleSystem(std::shared_ptr<BaseObject> model, Bound3D mb);
 
   ~ParticleSystem() {
   }
@@ -79,6 +39,8 @@ class ParticleSystem : public VisibleObject {
   void advance();
 
   void emitParticles();
+
+  void addVolume(Vec3f min, Vec3f max, float spacing);
 
   // getters
   virtual Vec3f center() const override {
@@ -111,22 +73,36 @@ class ParticleSystem : public VisibleObject {
   }
 
  private:
-  double _R2{}, _Poly6Kern{}, _LapKern{},
-      _SpikyKern{};  // Kernel functions
+  double _R2{}, _Poly6Kern{}, _LapKern{}, _SpikyKern{};  // Kernel functions
 
   std::shared_ptr<BaseObject> _obstacle;
+  Bound3D _mb;
 
   // particles
   std::vector<Particle> _particles;
-  int _maxParticles{};
+  std::vector<Particle> _pool;
 
   // SPH
   double _dt{};
   double _time{};
 
-  // Parameters
-  double _param[MAX_PARAM]{};
-  Vec3f _vec[MAX_PARAM];
+  Vec3f _init_min;
+  Vec3f _init_max;
+  Vec3f _vol_min;
+  Vec3f _vol_max;
+
+  float _clr_mode;
+  float _sim_scale;
+  float _viscosity;
+  float _rest_density;
+  float _p_mass;
+  float _p_radius;
+  float _p_dist;
+  float _smooth_radius;
+  float _ext_damp;
+  float _limit;
+  float _int_stiff;
+  float _ext_stiff;
 
   // Grid
   std::vector<int> _grid;

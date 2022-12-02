@@ -8,124 +8,115 @@
 #define EPSILON 0.00001f  // for collision detection
 #define RTOD double(180.0) / M_PI
 
-ParticleSystem::ParticleSystem(std::shared_ptr<BaseObject> model)
-    : _obstacle(std::move(model)) {
+ParticleSystem::ParticleSystem(std::shared_ptr<BaseObject> model, Bound3D mb)
+    : _obstacle(std::move(model)), _mb(mb) {
 }
 
 void ParticleSystem::initialize(int nParticles) {
   _particles.reserve(nParticles);
-  //  qDebug() << "size = " << _particles.size();
-
   _gridRes.set(0, 0, 0);
-  _time = 0;
 
+  _time = 0;
   //  _dt = 0.1;
   _dt = 0.003;
 
-  _param[CLR_MODE] = 2.0;
+  _clr_mode = 2.0;
+  _sim_scale = 0.004;  // unit size
 
-  //  _param[POINT_GRAV] = 100.0;
-  _param[POINT_GRAV] = 0.0;
-
-  //  _param[PLANE_GRAV] = 0.0;
-  _param[PLANE_GRAV] = 1.0;
-
-  _vec[POINT_GRAV_POS].set(0, 0, 50.0);
-
-  _vec[PLANE_GRAV_DIR].set(0.0, 0.0, 0.0);
-
-  // Emit param
-  _vec[EMIT_SPREAD].set(4, 4, 1);
-
-  //    _vec[EMIT_POS].set(50, 0, 35);
-  _vec[EMIT_POS].set(0, 0, 0);
-
-  //  _vec[EMIT_RATE].set(1, 10, 0);
-  _vec[EMIT_RATE].set(0, 0, 0);
-
-  //  _vec[EMIT_ANG].set(90, 45, 50.0);
-  _vec[EMIT_ANG].set(0, 90, 1.0);
-
-  _vec[EMIT_DANG].set(0, 0, 0);
-
-  //
-  _param[SIM_SCALE] = 0.004;  // unit size
-
-  _param[VISCOSITY] = 0.008;  // custom
-  //  _param[VISCOSITY] = 1.81e-5;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
+  _viscosity = 0.2;  // custom
+  //  _viscosity = 1.81e-5;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
   //  (see
   // wikipedia page on viscosity) 1.81 × 10-5
-  //  _param[VISCOSITY] = 0.2;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
+  //  _viscosity = 0.2;  // pascal-second (Pa.s) = 1 kg m^-1 s^-1
   //  (see
   //                                 // wikipedia page on viscosity)
 
-  //  _param[REST_DENSITY] = 600.0;  // kg / m^3; WATER
-  //    _param[REST_DENSITY] = 1.225;  // kg / m^3 AIR
-  _param[REST_DENSITY] = 600;  // CUSTOM
+  //  _rest_density = 600.0;  // kg / m^3; WATER
+  //    _rest_density = 1.225;  // kg / m^3 AIR
+  _rest_density = 300;    // CUSTOM
+  _p_mass = 0.00020543;   // kg WATER
+  _p_radius = 0.004;      // m
+  _p_dist = 0.0059;       // m
+  _smooth_radius = 0.01;  // m
 
-  _param[P_MASS] = 0.00020543;  // kg WATER
+  _ext_damp = 256.0;
+  //  _limit = 200.0;  // m / s DEFAULT
+  _limit = 200.0;  // CUSTOM
 
-  _param[P_RADIUS] = 0.004;  // m
+  //  _int_stiff= 1.00;
+  _int_stiff = 0.50;  // default 0.50
+                      //    _int_stiff= 0.80; //   custom
 
-  _param[P_DIST] = 0.0059;  // m
-
-  _param[SMOOTH_RADIUS] = 0.01;  // m
-
-  _param[EXT_DAMP] = 256.0;
-  //  _param[LIMIT] = 200.0;  // m / s DEFAULT
-  _param[LIMIT] = 200.0;  // CUSTOM
-
-  // from reset()
-  _param[MAX_FRAC] = 1.0;  // ?
-
-  _param[BOUND_Z_MIN_SLOPE] = 0.0;
-  _param[FORCE_X_MAX_SIN] = 0.0;
-  _param[FORCE_X_MIN_SIN] = 0.0;
-
-  //  _param[INT_STIFF] = 1.00;
-  _param[INT_STIFF] = 0.50;  // default 0.50
-  //  _param[INT_STIFF] = 0.30; //   custom
-
-  //   _param[EXT_STIFF] = 10000.0;
-  //  _param[EXT_STIFF] = 20000; // default 20000
-  _param[EXT_STIFF] = 10000;  //  custom
+  //   _ext_stiff = 10000.0;
+  //  _ext_stiff = 20000; // default 20000
+  _ext_stiff = 10000;  //  custom
 }
 
 void ParticleSystem::createExample(float xMin, float xMax, float yMin,
                                    float yMax, float zMin, float zMax) {
-  _vec[VOL_MIN].set(xMin, yMin, zMin);
-  _vec[VOL_MAX].set(xMax, yMax, zMax);
+  _vol_min.set(xMin, yMin, zMin);
+  _vol_max.set(xMax, yMax, zMax);
 
-  _vec[INIT_MIN].set(xMin, yMin, zMin);
-  _vec[INIT_MAX].set(xMax, yMax, zMax);
-
-  // emit
-  _vec[EMIT_POS].set(xMax, yMin + 10, zMin + 10);
-  _vec[EMIT_RATE].set(1, 4, 0);  // default 1, 4, 0
-  _vec[EMIT_ANG].set(0, 0, 0);
+  _init_min.set(xMin, yMin, zMin);
+  _init_max.set(xMax, yMax, zMax);
 
   computeKernels();
 
-  _param[SIM_SIZE] =
-      _param[SIM_SCALE] * (_vec[VOL_MAX].z() - _vec[VOL_MIN].z());
+  _p_dist = pow(_p_mass / _rest_density, 1 / 3.0);
 
-  _param[P_DIST] = pow(_param[P_MASS] / _param[REST_DENSITY], 1 / 3.0);
-
-  float ss = _param[P_DIST] * 0.87 / _param[SIM_SCALE];
+  float ss = _p_dist * 0.87 / _sim_scale;
   //  std::cout << "Spacing: %f " << ss << std::endl;
 
-  //  addVolume(_vec[INIT_MIN], _vec[INIT_MAX],
-  //            ss);  // Create the particles
+  addVolume(_init_min, _init_max,
+            ss);  // Create the particles  // Create the particles with good
+  //            positions and velocities
 
-  float cell_size = _param[SMOOTH_RADIUS] * 2.0;  // Grid cell size (2r)
-  gridSetup(_vec[VOL_MIN], _vec[VOL_MAX], _param[SIM_SCALE], cell_size,
+  float cell_size = _smooth_radius * 2.0;  // Grid cell size (2r)
+  gridSetup(_vol_min, _vol_max, _sim_scale, cell_size,
             1.0);  // Setup grid
 
   gridInsertParticles();
 }
 
+void ParticleSystem::addVolume(Vec3f min, Vec3f max, float spacing) {
+  float dx, dy, dz;
+
+  dx = max.x() - min.x();
+  dy = max.y() - min.y();
+  dz = max.z() - min.z();
+
+  // generate particles in defined positions
+  for (float x = min.x(); x <= max.x() && _particles.size() < 2000;
+       x += spacing) {
+    for (float y = min.y(); y <= max.y() && _particles.size() < 2000;
+         y += spacing) {
+      for (float z = min.z(); z <= max.z() && _particles.size() < 2000;
+           z += spacing) {
+        if (_mb.xMin - 1 <= x && x <= _mb.xMax + 1 && _mb.yMin - 1 <= y &&
+            y <= _mb.yMax + 1 && _mb.zMin - 1 <= z && z <= _mb.zMax + 1) {
+          continue;
+        }
+
+        //        std::cout << "Insert...\n";
+        auto &p = _particles.emplace_back();
+        p.pos.set(x, y, z);
+        p.clr = COLORA((x - min.x()) / dx, (y - min.y()) / dy,
+                       (z - min.z()) / dz, 1);
+        p.vel.set(-1, 0, 0);
+        p.vel_eval.set(-1, 0, 0);
+      }
+    }
+  }
+
+  //  std::cout << "Inserted particles:\n";
+  //  auto it = _particles.begin();
+  //  for (int i = 0; i < 10 && it != _particles.end(); ++i, ++it) {
+  //    std::cout << *it << std::endl;
+  //  }
+}
+
 void ParticleSystem::run() {
-  float ss = _param[P_DIST] / _param[SIM_SCALE];  // simulation scale
+  float ss = _p_dist / _sim_scale;  // simulation scale
 
   //  if (m_Vec[EMIT_RATE].x() > 0 &&
   //      (++m_Frame) % (int)m_Vec[EMIT_RATE].x() == 0) {
@@ -152,9 +143,13 @@ void ParticleSystem::run() {
 }
 
 void ParticleSystem::advance() {
-  const auto model = std::dynamic_pointer_cast<PolygonalModel>(_obstacle);
-  const auto &faces = model->components()->faces();
-  const auto &vertices = model->components()->vertices();
+  std::vector<Face> faces;
+  std::vector<Vec3f> vertices;
+  if (_obstacle) {
+    const auto model = std::dynamic_pointer_cast<PolygonalModel>(_obstacle);
+    faces = model->components()->faces();
+    vertices = model->components()->vertices();
+  }
   Vec3f v1, v2, v3;
   Vec3f normal, p1, p2, pi;
   float A, B, C, D, t, numerator, denominator;
@@ -167,88 +162,89 @@ void ParticleSystem::advance() {
   float ss, radius;
   float stiff, damp, speed, diff;
 
-  stiff = _param[EXT_STIFF];  // коэффициент жесткости для столкновения со
+  stiff = _ext_stiff;  // коэффициент жесткости для столкновения со
   // стенками и полигонами обьектов
-  damp = _param[EXT_DAMP];
-  radius = _param[P_RADIUS];
-  min = _vec[VOL_MIN];
-  max = _vec[VOL_MAX];
-  ss = _param[SIM_SCALE];
+  damp = _ext_damp;
+  radius = _p_radius;
+  min = _vol_min;
+  max = _vol_max;
+  ss = _sim_scale;
 
   Vec3i d = Vec3i((max - min).x(), (max - min).y(), (max - min).z());
 
-  //  pend = _particles + _nParticles;
   for (auto &p : _particles) {
     // Compute Acceleration
-    accel = p.force * _param[P_MASS];  // Why, a = F / m?
+    accel = p.force * _p_mass;  // Why, a = F / m?
 
     // Velocity limiting
     speed =
         accel.x() * accel.x() + accel.y() * accel.y() + accel.z() * accel.z();
-    if (speed > _param[LIMIT] * _param[LIMIT]) {
-      accel *= _param[LIMIT] / sqrt(speed);
+    if (speed > _limit * _limit) {
+      accel *= _limit / sqrt(speed);
     }
 
-    // Obstacle collision
-    p1 = p.pos, p2 = (p.pos + p.vel_eval);
-    for (const auto &face : faces) {
-      v1 = vertices[face.vertex(0)];
-      v2 = vertices[face.vertex(1)];
-      v3 = vertices[face.vertex(2)];
-      // TODO: solve scale problem
-      v1 *= 30;
-      v2 *= 30;
-      v3 *= 30;
-      //     std::cout << p1 << " " << p2 << std::endl;
+    if (_obstacle) {
+      // Obstacle collision
+      p1 = p.pos, p2 = (p.pos + p.vel_eval);
+      for (const auto &face : faces) {
+        v1 = vertices[face.vertex(0)];
+        v2 = vertices[face.vertex(1)];
+        v3 = vertices[face.vertex(2)];
+        // TODO: solve scale problem
+        v1 *= 30;
+        v2 *= 30;
+        v3 *= 30;
+        //     std::cout << p1 << " " << p2 << std::endl;
 
-      normal = Vec3f::crossProduct(v2 - v1, v3 - v1).normalize();
+        normal = Vec3f::crossProduct(v2 - v1, v3 - v1).normalize();
 
-      A = normal.x();
-      B = normal.y();
-      C = normal.z();
-      D = -(A * v1.x() + B * v1.y() + C * v1.z());
+        A = normal.x();
+        B = normal.y();
+        C = normal.z();
+        D = -(A * v1.x() + B * v1.y() + C * v1.z());
 
-      numerator = A * p1.x() + B * p1.y() + C * p1.z() + D;
-      denominator =
-          A * (p1.x() - p2.x()) + B * (p1.y() - p2.y()) + C * (p1.z() - p2.z());
+        numerator = A * p1.x() + B * p1.y() + C * p1.z() + D;
+        denominator = A * (p1.x() - p2.x()) + B * (p1.y() - p2.y()) +
+                      C * (p1.z() - p2.z());
 
-      if (fabs(denominator) < EPSILON)
-        continue;
+        if (fabs(denominator) < EPSILON)
+          continue;
 
-      t = numerator / denominator;
+        t = numerator / denominator;
 
-      if (t < 0)
-        continue;
+        if (t < 0)
+          continue;
 
-      pi = p1 + (p2 - p1) * t;
+        pi = p1 + (p2 - p1) * t;
 
-      pc1 = (v1 - pi).normalize();
-      pc2 = (v2 - pi).normalize();
-      pc3 = (v3 - pi).normalize();
+        pc1 = (v1 - pi).normalize();
+        pc2 = (v2 - pi).normalize();
+        pc3 = (v3 - pi).normalize();
 
-      a1 = acos(Vec3f::dotProduct(pc1, pc2));
-      a2 = acos(Vec3f::dotProduct(pc2, pc3));
-      a3 = acos(Vec3f::dotProduct(pc3, pc1));
+        a1 = acos(Vec3f::dotProduct(pc1, pc2));
+        a2 = acos(Vec3f::dotProduct(pc2, pc3));
+        a3 = acos(Vec3f::dotProduct(pc3, pc1));
 
-      if (fabs((a1 + a2 + a3) * RTOD - 360) > 1e-3)
-        continue;
+        if (fabs((a1 + a2 + a3) * RTOD - 360) > 1e-3)
+          continue;
 
-      // find dist
-      dist = (pi - p1).length();
+        // find dist
+        dist = (pi - p1).length();
 
-      diff = 2 * radius - dist * ss;
-      if (diff < 2 * radius && diff > 1e-3) {
-        adj = 2 * stiff * diff - damp * Vec3f::dotProduct(normal, p.vel_eval);
-        accel.x() += adj * normal.x();
-        accel.y() += adj * normal.y();
-        accel.z() += adj * normal.z();
+        diff = 2 * radius - dist * ss;
+        if (diff < 2 * radius && diff > 1e-3) {
+          adj = 2 * stiff * diff - damp * Vec3f::dotProduct(normal, p.vel_eval);
+          accel.x() += adj * normal.x();
+          accel.y() += adj * normal.y();
+          accel.z() += adj * normal.z();
+        }
       }
     }
 
     // Z-axis walls
     diff = 2 * radius - (p.pos.z() - min.z()) * ss;
     if (diff > EPSILON) {
-      norm.set(-_param[BOUND_Z_MIN_SLOPE], 0, 1.0 - _param[BOUND_Z_MIN_SLOPE]);
+      norm.set(0, 0, 1);
 
       adj = stiff * diff - damp * Vec3f::dotProduct(norm, p.vel_eval);
       accel.x() += adj * norm.x();
@@ -268,10 +264,7 @@ void ParticleSystem::advance() {
     // X-axis walls
     diff = 2 * radius - (p.pos.x() - min.x()) * ss;
     if (diff > EPSILON) {
-      // delete particle
-      //      deleteParticle(p - _particles);
-
-      // respawn particle
+      // save particle to pool
       p.pos = Vec3f(max.x() - 6 * radius, min.y() + rand() % d.y(),
                     min.z() + rand() % d.z());
       p.vel = Vec3f(-5, 0, 0);
@@ -323,11 +316,11 @@ void ParticleSystem::advance() {
     p.pos += vnext;  // p(t+1) = p(t) + v(t+1/2) dt
 
     // set color
-    if (_param[CLR_MODE] == 1.0) {
+    if (_clr_mode == 1.0) {
       adj = fabs(vnext.x()) + fabs(vnext.y()) + fabs(vnext.z()) / 7000.0;
       adj = (adj > 1.0) ? 1.0 : adj;
       p.clr = COLORA(0, adj, adj, 1);
-    } else if (_param[CLR_MODE] == 2.0) {
+    } else if (_clr_mode == 2.0) {
       float v = 0.5 + (p.pressure / 1500.0);
       if (v < 0.1)
         v = 0.1;
@@ -344,11 +337,11 @@ void ParticleSystem::emitParticles() {
   Vec3f dir = {-5, 0, 0};
   Vec3f pos;
 
-  pos.setX(_vec[VOL_MAX].x());
-  pos.setY(_vec[VOL_MIN].y() +
-           rand() % (int)(_vec[VOL_MAX].y() - _vec[VOL_MIN].y()));
-  pos.setZ(_vec[VOL_MIN].z() +
-           rand() % (int)(_vec[VOL_MAX].z() - _vec[VOL_MIN].z()));
+  pos.setX(_vol_max.x());
+  pos.setY(_vol_min.y() +
+           rand() % (int)(_vol_max.y() - _vol_min.y()));
+  pos.setZ(_vol_min.z() +
+           rand() % (int)(_vol_max.z() - _vol_min.z()));
 
   Particle &p = _particles.emplace_back();
   p.pos = pos;
@@ -360,25 +353,24 @@ void ParticleSystem::emitParticles() {
 }
 
 void ParticleSystem::computeKernels() {
-  _param[P_DIST] = pow(_param[P_MASS] / _param[REST_DENSITY], 1 / 3.0);
+  _p_dist = pow(_p_mass / _rest_density, 1 / 3.0);
 
-  _R2 = _param[SMOOTH_RADIUS] * _param[SMOOTH_RADIUS];
-  _Poly6Kern =
-      315.0f / (64.0f * PI *
-                pow(_param[SMOOTH_RADIUS], 9));  // Wpoly6 kernel (denominator
+  _R2 = _smooth_radius * _smooth_radius;
+  _Poly6Kern = 315.0f / (64.0f * PI *
+                         pow(_smooth_radius, 9));  // Wpoly6 kernel (denominator
   // part) - 2003 Muller, p.4
   _SpikyKern =
-      -45.0f / (PI * pow(_param[SMOOTH_RADIUS],
+      -45.0f / (PI * pow(_smooth_radius,
                          6));  // Laplacian of viscocity (denominator): PI h^6
-  _LapKern = 45.0f / (PI * pow(_param[SMOOTH_RADIUS], 6));
+  _LapKern = 45.0f / (PI * pow(_smooth_radius, 6));
 }
 
 // Compute Pressures - Using spatial grid, and also create neighbor table
 void ParticleSystem::computePressureGrid() {
   int pndx;
   float dx, dy, dz, sum, dSqr, c;
-  float h = _param[SMOOTH_RADIUS], h2 = h * h;
-  float simH = _param[SMOOTH_RADIUS] / _param[SIM_SCALE];
+  float h = _smooth_radius, h2 = h * h;
+  float simH = _smooth_radius / _sim_scale;
 
   int i = 0;
 
@@ -400,9 +392,9 @@ void ParticleSystem::computePressureGrid() {
           }
 
           // dist between particles in cm
-          dx = (p.pos.x() - pcur->pos.x()) * _param[SIM_SCALE];
-          dy = (p.pos.y() - pcur->pos.y()) * _param[SIM_SCALE];
-          dz = (p.pos.z() - pcur->pos.z()) * _param[SIM_SCALE];
+          dx = (p.pos.x() - pcur->pos.x()) * _sim_scale;
+          dy = (p.pos.y() - pcur->pos.y()) * _sim_scale;
+          dz = (p.pos.z() - pcur->pos.z()) * _sim_scale;
           dSqr = (dx * dx + dy * dy + dz * dz);
 
           if (dSqr < h2) {
@@ -422,8 +414,8 @@ void ParticleSystem::computePressureGrid() {
       _gridCell[j] = -1;
     }
 
-    p.density = sum * _param[P_MASS] * _Poly6Kern;
-    p.pressure = (p.density - _param[REST_DENSITY]) * _param[INT_STIFF];
+    p.density = sum * _p_mass * _Poly6Kern;
+    p.pressure = (p.density - _rest_density) * _int_stiff;
     p.density = 1.0f / p.density;
     ++i;
   }
@@ -445,18 +437,18 @@ void ParticleSystem::computeForceGridNC() {
       pcur = &(_particles[_neighbor[i][j]]);
 
       // dist in cm
-      dx = (p.pos.x() - pcur->pos.x()) * _param[SIM_SCALE];
-      dy = (p.pos.y() - pcur->pos.y()) * _param[SIM_SCALE];
-      dz = (p.pos.z() - pcur->pos.z()) * _param[SIM_SCALE];
+      dx = (p.pos.x() - pcur->pos.x()) * _sim_scale;
+      dy = (p.pos.y() - pcur->pos.y()) * _sim_scale;
+      dz = (p.pos.z() - pcur->pos.z()) * _sim_scale;
 
-      c = _param[SMOOTH_RADIUS] - _neighborDist[i][j];
+      c = _smooth_radius - _neighborDist[i][j];
 
       pterm = -0.5f * c * _SpikyKern * (p.pressure + pcur->pressure) /
               _neighborDist[i][j];
 
       dterm = c * p.density * pcur->density;
 
-      vterm = _LapKern * _param[VISCOSITY];
+      vterm = _LapKern * _viscosity;
 
       force.x() +=
           (pterm * dx + vterm * (pcur->vel_eval.x() - p.vel_eval.x())) * dterm;
