@@ -33,7 +33,6 @@ public:
       , _lights(lights)
       , _mode(mode)
       , _particleMode(particleMode) {
-    // TODO: here need to init matrices
   }
 
   virtual void visit(const WireframeModel& model) override;

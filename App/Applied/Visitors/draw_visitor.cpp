@@ -1,12 +1,9 @@
 #include "draw_visitor.h"
 
 void DrawVisitor::visit(const WireframeModel& model) {
-  //  qDebug() << "DrawVisitor::visit(const WireframeModel& model)"
-  //           << model._color.red() << model._color.green() <<
-  //           model._color.blue();
+  //  std::cout << "[DBG]: DrawVisitor::visit(const WireframeModel&)\n";
   // compute matrices
-  const Mtr4x4f modelView =
-  Mtr4x4f::lookAt(_camera->eye(), _camera->center(), _camera->up());
+  const Mtr4x4f modelView = Mtr4x4f::lookAt(_camera->eye(), _camera->center(), _camera->up());
 
   const int width = _drawer->width(), height = _drawer->height();
   const Mtr4x4f viewport = Mtr4x4f::viewport(0, 0, width, height);
@@ -56,8 +53,7 @@ void DrawVisitor::wireframeDraw(const PolygonalModel& model) {
   const auto& faces = model._components->faces();
 
   // matrix
-  const Mtr4x4f modelView =
-  Mtr4x4f::lookAt(_camera->eye(), Vec3f(_camera->center()), _camera->up());
+  const Mtr4x4f modelView = Mtr4x4f::lookAt(_camera->eye(), Vec3f(_camera->center()), _camera->up());
 
   const int width = _drawer->width(), height = _drawer->height();
   const Mtr4x4f viewport = Mtr4x4f::viewport(0, 0, width, height);
@@ -108,8 +104,7 @@ void DrawVisitor::simpleDraw(const PolygonalModel& model) {
   const auto& faces = model._components->faces();
 
   // compute matrices
-  const Mtr4x4f modelView =
-  Mtr4x4f::lookAt(_camera->eye(), _camera->center(), _camera->up());
+  const Mtr4x4f modelView = Mtr4x4f::lookAt(_camera->eye(), _camera->center(), _camera->up());
   const int width = _drawer->width(), height = _drawer->height();
   const Mtr4x4f viewport = Mtr4x4f::viewport(0, 0, width, height);
   const Mtr4x4f flipVertically = Mtr4x4f(1, 0, 0, 0,   //
@@ -144,9 +139,7 @@ void DrawVisitor::simpleDraw(const PolygonalModel& model) {
     // draw
     if (intensity > 0) {
       //      if (face.size() == 3) {
-      _drawer->drawTriangle(
-      v1, v2, v3,
-      Color(255 * intensity, 255 * intensity, 255 * intensity, 255));
+      _drawer->drawTriangle(v1, v2, v3, Color(255 * intensity, 255 * intensity, 255 * intensity, 255));
 
       //      }
       //      else if (face.size() == 4) {
@@ -174,8 +167,7 @@ void DrawVisitor::gourandDraw(const PolygonalModel& model) {
   //  Vec3f light = _lights[0]->dir().normalize();
 
   // matrix
-  const Mtr4x4f modelView =
-  Mtr4x4f::lookAt(_camera->eye(), _camera->center(), _camera->up());
+  const Mtr4x4f modelView = Mtr4x4f::lookAt(_camera->eye(), _camera->center(), _camera->up());
   const int width = _drawer->width(), height = _drawer->height();
   const Mtr4x4f viewport = Mtr4x4f::viewport(0, 0, width, height);
   const Mtr4x4f flipVertically = Mtr4x4f(1, 0, 0, 0,   //
@@ -232,8 +224,7 @@ void DrawVisitor::gourandDraw(const PolygonalModel& model) {
 
 void DrawVisitor::visit(const ParticleSystem& ps) {
   //  qDebug() << "DrawVisitor::visit(const ParticleSystem& model)";
-  const Mtr4x4f modelView =
-  Mtr4x4f::lookAt(_camera->eye(), Vec3f(_camera->center()), _camera->up());
+  const Mtr4x4f modelView = Mtr4x4f::lookAt(_camera->eye(), Vec3f(_camera->center()), _camera->up());
 
   const int width = _drawer->width(), height = _drawer->height();
   const Mtr4x4f viewport = Mtr4x4f::viewport(0, 0, width, height);
@@ -247,7 +238,7 @@ void DrawVisitor::visit(const ParticleSystem& ps) {
   Vec4f tvec;
   Vec3f vel;
 
-  for (auto &p : ps._particles) {
+  for (auto& p : ps._particles) {
     Vec3f point = Vec3f(p.pos.x(), p.pos.y(), p.pos.z());
 
     point.x() = point.x() / 30.0;
@@ -262,8 +253,7 @@ void DrawVisitor::visit(const ParticleSystem& ps) {
     if (vel.length() != 0) {
       vel.normalize();
       //      vel *= 3;
-      point2 =
-      Vec3f(p.pos.x() + vel.x(), p.pos.y() + vel.y(), p.pos.z() + vel.z());
+      point2 = Vec3f(p.pos.x() + vel.x(), p.pos.y() + vel.y(), p.pos.z() + vel.z());
 
       point2.x() = point2.x() / 30.0;
       point2.y() = point2.y() / 30.0;
@@ -275,8 +265,7 @@ void DrawVisitor::visit(const ParticleSystem& ps) {
       point2 = point;
     }
 
-    Color color =
-    Color(255 * RED(p.clr), 255 * GRN(p.clr), 255 * BLUE(p.clr));
+    Color color = Color(255 * RED(p.clr), 255 * GRN(p.clr), 255 * BLUE(p.clr));
 
     if (_particleMode == SPHERE) {
       _drawer->drawSphere(point, color, Vec3f());

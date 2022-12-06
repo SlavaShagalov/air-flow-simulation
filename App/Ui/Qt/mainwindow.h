@@ -1,34 +1,35 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
+#include <App/Applied/Drawer/drawer.h>
+#include <App/Applied/Facade/facade.h>
+
+#include <QGraphicsScene>
+#include <QKeyEvent>
+#include <QMainWindow>
+#include <QMouseEvent>
+#include <QThread>
+#include <QTimer>
+#include <QWheelEvent>
 #include <cstddef>
 #include <memory>
-
-#include <QMainWindow>
-#include <QGraphicsScene>
-#include <QMouseEvent>
-#include <QKeyEvent>
-#include <QWheelEvent>
-#include <QTimer>
-
-#include <App/Applied/Facade/facade.h>
-#include <App/Applied/Drawer/drawer.h>
 
 #include "global_types.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui {
+class MainWindow;
+}
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow {
   Q_OBJECT
 
-public:
-  MainWindow(QApplication* app, QWidget* parent = nullptr);
+ public:
+  explicit MainWindow(QWidget* parent = nullptr);
 
-  ~MainWindow();
+  ~MainWindow() override;
 
-private slots:
+ private slots:
   void start();
 
   // mouse and keyboard handle
@@ -41,94 +42,81 @@ private slots:
 
   // buttons handle
   void on_loadPolygonalModelBtn_clicked();
-
   void on_runSimBtn_clicked();
 
+  // set camera
   void on_topCamBtn_clicked();
-
   void on_bottomCamBtn_clicked();
-
   void on_frontCamBtn_clicked();
-
   void on_backCamBtn_clicked();
-
   void on_rightCamBtn_clicked();
-
   void on_leftCamBtn_clicked();
 
   //
   void on_lengthSpinBox_valueChanged(double arg1);
-
   void on_widthSpinBox_valueChanged(double arg1);
-
   void on_heightSpinBox_valueChanged(double arg1);
 
+  // model
   void on_delModelBtn_clicked();
-
   void on_zoneViewCheckBox_stateChanged(int arg1);
 
-private:
-  void _updateScene();
-  void _setupDrawing();
-  void _buildSimZone();
-  void _addAxis();
-  void _removeParticleSystem();
-  void _addDefaultCamera();
-  void _addDefaultLight();
+  // change modeling parameters
+  void on_emit_rate_valueChanged(int value);
+  void on_max_speed_valueChanged(int value);
+  void on_viscosity_valueChanged(int value);
+  void on_int_stiff_valueChanged(int value);
+  void on_ext_stiff_valueChanged(int value);
+  void on__start_speed_valueChanged(int value);
 
-  void _connectSlots();
+ public:
+  void connectDevicesSlots();
+  void setupQScene();
+
   void _simRunnedDisableInterface();
   void _simStoppedEnableInterface();
 
-private:
+ public:
   Ui::MainWindow* _ui;
-  QApplication* _app;
+
+  //  std::thread _t_sim;
 
   QTimer _timer;
 
-  std::shared_ptr<Facade> _facade = std::make_shared<Facade>();
+  QGraphicsScene* _qScene;
 
-  std::shared_ptr<QGraphicsScene> _qScene;
+ signals:
+  void loadModelSignal(const QString&);
+  void sendQSceneSignal(QGraphicsScene*);
+  void runSimulationSignal(int);
 
-  // objects
-  std::shared_ptr<Scene> _scene;
-  std::shared_ptr<BaseDrawer> _drawer;
-  shared_ptr<BaseObject> _model;
-  shared_ptr<Camera> _camera;
-  std::shared_ptr<ParticleSystem> psys;
+  // set camera
+  void setCamToTopSignal();
+  void setCamToBottomSignal();
+  void setCamToLeftSignal();
+  void setCamToRightSignal();
+  void setCamToBackSignal();
+  void setCamToFrontSignal();
 
-  QPoint _prevMousePos;
-  bool _mouseRightButtonPressed = false;
-  bool _mouseLeftButtonPressed = false;
+  // parameters changed
+  void emitRateChangedSignal(int);
+  void maxSpeedChangedSignal(int);
+  void viscosityChangedSignal(int);
+  void intStiffChangedSignal(int);
+  void extStiffChangedSignal(int);
+  void startSpeedChangedSignal(int);
 
-  bool _xActive = false;
-  bool _yActive = false;
+  // model
+  void delModelSignal();
 
-  bool _f1 = false;
-  bool _f2 = false;
+  // devices
+  void mousePressSignal(QMouseEvent*);
+  void mouseReleaseSignal(QMouseEvent*);
+  void mouseMoveSignal(QMouseEvent*);
+  void wheelSignal(QWheelEvent*);
+  void keyPressSignal(QKeyEvent*);
+  void keyReleaseSignal(QKeyEvent*);
 
-  bool _simRunned = false;
-
-  size_t _nObjects = 0;
-  int _cameraId;
-  int _modelId;
-
-  // Particle System
-  int _psysId = -1;
-
-  // Simulation Zone
-  float _xMax, _yMax, _zMax, _xMin, _yMin, _zMin;
-  Bound3D model_bound;
-  int _zoneId = -1;
-
-protected:
-  // model tranform
-  void moveModel(double dx, double dy, double dz);
-  void rotateModel(double dx, double dy, double dz);
-  void scaleModel(double kx, double ky, double kz);
-
-  // camera tranform
-  void rotateCamera(double dx, double dy, double dz);
+  void setModelMouseObjectSignal();
+  void setCameraMouseObjectSignal();
 };
-
-#endif  // MAINWINDOW_H

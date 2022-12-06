@@ -29,7 +29,7 @@ class ParticleSystem : public VisibleObject {
   }
 
   // control methods
-  void initialize(int nmax);
+  void initialize(size_t nmax);
 
   void createExample(float xMin, float xMax, float yMin, float yMax, float zMin,
                      float zMax);
@@ -72,25 +72,6 @@ class ParticleSystem : public VisibleObject {
   virtual void accept(BaseTransformVisitor &visitor) override {
   }
 
- private:
-  double _R2{}, _Poly6Kern{}, _LapKern{}, _SpikyKern{};  // Kernel functions
-
-  std::shared_ptr<BaseObject> _obstacle;
-  Bound3D _mb;
-
-  // particles
-  std::vector<Particle> _particles;
-  std::vector<Particle> _pool;
-
-  // SPH
-  double _dt{};
-  double _time{};
-
-  Vec3f _init_min;
-  Vec3f _init_max;
-  Vec3f _vol_min;
-  Vec3f _vol_max;
-
   float _clr_mode;
   float _sim_scale;
   float _viscosity;
@@ -103,6 +84,29 @@ class ParticleSystem : public VisibleObject {
   float _limit;
   float _int_stiff;
   float _ext_stiff;
+  float _emit_rate;
+  float start_speed = 5;
+  size_t _maxp;
+
+ public:
+  double _R2{}, _Poly6Kern{}, _LapKern{}, _SpikyKern{};  // Kernel functions
+
+  std::shared_ptr<BaseObject> _obstacle;
+  Bound3D _mb;
+
+  // particles
+  std::vector<Particle> _particles;
+  size_t _count_deleted = 0;
+  double _last_emit_time = 0;
+
+  // SPH
+  double _dt{};
+  double _time{};
+
+  Vec3f _init_min;
+  Vec3f _init_max;
+  Vec3f _vol_min;
+  Vec3f _vol_max;
 
   // Grid
   std::vector<int> _grid;

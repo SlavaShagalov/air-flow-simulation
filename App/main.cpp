@@ -1,15 +1,24 @@
 #include <QApplication>
+#include <QThread>
 
-#include <App/Ui/Qt/mainwindow.h>
+#include "App/Workers/main_worker.h"
 
 int main(int argc, char* argv[]) {
+  setbuf(stdout, nullptr);
   qputenv("QT_ASSUME_STDERR_HAS_CONSOLE", "1");
   srand(time(nullptr));
 
   QApplication app(argc, argv);
 
-  MainWindow w(&app);
-  w.showMaximized();
+  MainWorker mainWorker;
+//  QThread qThread;
+//  mainWorker.moveToThread(&qThread);
+//  qThread.start();
 
-  return QApplication::exec();
+  QApplication::exec();
+
+//  qThread.quit();
+//  qThread.wait();
+
+  return 0;
 }
