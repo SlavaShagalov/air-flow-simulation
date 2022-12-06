@@ -134,7 +134,6 @@ set(SRCS
         App/Applied/Exceptions/camera_exceptions.h
         App/Applied/Exceptions/load_exceptions.h
         App/Applied/Exceptions/model_exceptions.h
-        App/Applied/Exceptions/ui_exceptions.h
         App/Applied/Facade/facade.h
         App/Applied/Image/image.cpp
         App/Applied/Image/image.h
@@ -228,7 +227,6 @@ set(SRCS
         App/Ui/Qt/custom_graphics_view.h
         App/Ui/Qt/mainwindow.c++
         App/Ui/Qt/mainwindow.h
-        App/Ui/Qt/mainwindow.ui
         App/main.cpp
         )
 
