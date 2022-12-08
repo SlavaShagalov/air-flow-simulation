@@ -45,6 +45,11 @@ class GuiWorker : public QObject {
     connect(&_mainWindow, &MainWindow::extStiffChangedSignal, this, &GuiWorker::extStiffChangedSignal);
     connect(&_mainWindow, &MainWindow::startSpeedChangedSignal, this, &GuiWorker::startSpeedChangedSignal);
 
+    // zone size
+    connect(&_mainWindow, &MainWindow::lengthChangedSignal, this, &GuiWorker::lengthChangedSignal);
+    connect(&_mainWindow, &MainWindow::widthChangedSignal, this, &GuiWorker::widthChangedSignal);
+    connect(&_mainWindow, &MainWindow::heightChangedSignal, this, &GuiWorker::heightChangedSignal);
+
     // model
     connect(&_mainWindow, &MainWindow::delModelSignal, this, &GuiWorker::delModelSignal);
 
@@ -59,6 +64,25 @@ class GuiWorker : public QObject {
     //
     connect(&_mainWindow, &MainWindow::setModelMouseObjectSignal, this, &GuiWorker::setModelMouseObjectSignal);
     connect(&_mainWindow, &MainWindow::setCameraMouseObjectSignal, this, &GuiWorker::setCameraMouseObjectSignal);
+
+    connect(&_mainWindow, &MainWindow::finishAppSignal, this, &GuiWorker::finishAppSignal);
+
+    // from MainWroker
+    connect(this, &GuiWorker::sendFpsSignal, &_mainWindow, &MainWindow::getFpsSlot);
+    connect(this, &GuiWorker::simRunnedSignal, &_mainWindow, &MainWindow::simRunnedSlot);
+    connect(this, &GuiWorker::simStoppedSignal, &_mainWindow, &MainWindow::simStoppedSlot);
+
+    // model view radio buttons
+    connect(&_mainWindow, &MainWindow::setWireframeViewSignal, this, &GuiWorker::setWireframeViewSignal);
+    connect(&_mainWindow, &MainWindow::setSimpleViewSignal, this, &GuiWorker::setSimpleViewSignal);
+    connect(&_mainWindow, &MainWindow::setGourandViewSignal, this, &GuiWorker::setGourandViewSignal);
+
+    connect(&_mainWindow, &MainWindow::setZoneViewSignal, this, &GuiWorker::setZoneViewSignal);
+  }
+
+ public slots:
+  void getFpsSlot(int FPS, size_t np) {
+    emit sendFpsSignal(FPS, np);
   }
 
  signals:
@@ -82,6 +106,11 @@ class GuiWorker : public QObject {
   void extStiffChangedSignal(int);
   void startSpeedChangedSignal(int);
 
+  // zone size
+  void lengthChangedSignal(double);
+  void widthChangedSignal(double);
+  void heightChangedSignal(double);
+
   // model
   void delModelSignal();
 
@@ -96,6 +125,21 @@ class GuiWorker : public QObject {
   //
   void setModelMouseObjectSignal();
   void setCameraMouseObjectSignal();
+
+  void finishAppSignal();
+
+  // from MainWorker
+  void sendFpsSignal(int, size_t);
+  void simRunnedSignal();
+  void simStoppedSignal();
+
+  // model view radio buttons
+  void setWireframeViewSignal();
+  void setSimpleViewSignal();
+  void setGourandViewSignal();
+
+  // zone view
+  void setZoneViewSignal(bool value);
 
  private:
   MainWindow _mainWindow;

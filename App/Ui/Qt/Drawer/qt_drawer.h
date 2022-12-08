@@ -28,17 +28,17 @@ class QtDrawer : public BaseDrawer {
                               const Color& color = Color()) override;
 
   // draw triangle
-  virtual void drawTriangle(Vec3f& v1, Vec3f& v2, Vec3f& v3, const Color& color) override;
+  void drawTriangle(Vec3f& v1, Vec3f& v2, Vec3f& v3, int ymin, int ymax, const Color& color = Color()) override;
   virtual void drawTriangle(Vec3f& v1, Vec3f& v2, Vec3f& v3, float& i1, float& i2, float& i3,
                             const Color& color) override;
 
   // draw line
-  virtual void drawLine(const Vec3f& v1, const Vec3f& v2, const Color& color = Color()) override;
+  virtual void drawLine(const Vec3f& v1, const Vec3f& v2, int ymin, int ymax, const Color& color = Color()) override;
   virtual void drawLineWidth(const Vec3f& v1, const Vec3f& v2, const Color& color = Color(),
                              const int width = 1) override;
 
   // draw vector
-  virtual void drawVector(const Vec3f& v1, const Vec3f& v2, const Color& color = Color()) override;
+  void drawVector(const Vec3f& v1, const Vec3f& v2, int ymin, int ymax, const Color& color = Color()) override;
 
   // draw point
   virtual void drawSphere(const Vec3f& point, const Color& color, const Vec3f& vel) override;

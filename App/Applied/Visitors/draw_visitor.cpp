@@ -25,8 +25,13 @@ void DrawVisitor::visit(const WireframeModel& model) {
   }
 
   // draw
-  for (const auto& edge : edges)
-    _drawer->drawLine(vertices[edge[0]], vertices[edge[1]], model._color);
+  for (const auto& edge : edges) {
+    if ((vertices[edge[0]].y() < _ymin && vertices[edge[1]].y() < _ymin) ||
+        (vertices[edge[0]].y() > _ymax && vertices[edge[1]].y() > _ymax)) {
+      continue;
+    }
+    _drawer->drawLine(vertices[edge[0]], vertices[edge[1]], _ymin, _ymax, model._color);
+  }
 }
 
 void DrawVisitor::visit(const PolygonalModel& model) {
@@ -80,19 +85,19 @@ void DrawVisitor::wireframeDraw(const PolygonalModel& model) {
     trV = mtr * Vec4f(v3.x(), v3.y(), v3.z(), 1);
     v3 = Vec3f(trV.x() / trV.w(), trV.y() / trV.w(), trV.z() / trV.w());
 
-    _drawer->drawLine(v1, v2);
-    _drawer->drawLine(v2, v3);
+    _drawer->drawLine(v1, v2, _ymin, _ymax);
+    _drawer->drawLine(v2, v3, _ymin, _ymax);
 
     // draw
     if (face.size() == 3) {
-      _drawer->drawLine(v3, v1);
+      _drawer->drawLine(v3, v1, _ymin, _ymax);
     } else if (face.size() == 4) {
       v4 = vertices[face.vertex(3)];
       trV = mtr * Vec4f(v4.x(), v4.y(), v4.z(), 1);
       v4 = Vec3f(trV.x() / trV.w(), trV.y() / trV.w(), trV.z() / trV.w());
 
-      _drawer->drawLine(v3, v4);
-      _drawer->drawLine(v4, v1);
+      _drawer->drawLine(v3, v4, _ymin, _ymax);
+      _drawer->drawLine(v4, v1, _ymin, _ymax);
     }
   }
 }
@@ -139,7 +144,11 @@ void DrawVisitor::simpleDraw(const PolygonalModel& model) {
     // draw
     if (intensity > 0) {
       //      if (face.size() == 3) {
-      _drawer->drawTriangle(v1, v2, v3, Color(255 * intensity, 255 * intensity, 255 * intensity, 255));
+      if ((v1.y() < _ymin && v2.y() < _ymin && v3.y() < _ymin) ||
+          (v1.y() > _ymax && v2.y() > _ymax && v3.y() > _ymax)) {
+        continue;
+      }
+      _drawer->drawTriangle(v1, v2, v3, _ymin, _ymax, Color(255 * intensity, 255 * intensity, 255 * intensity, 255));
 
       //      }
       //      else if (face.size() == 4) {
@@ -265,12 +274,16 @@ void DrawVisitor::visit(const ParticleSystem& ps) {
       point2 = point;
     }
 
+    if ((point.y() < _ymin && point2.y() < _ymin) || (point.y() > _ymax && point2.y() > _ymax)) {
+      continue;
+    }
+
     Color color = Color(255 * RED(p.clr), 255 * GRN(p.clr), 255 * BLUE(p.clr));
 
     if (_particleMode == SPHERE) {
       _drawer->drawSphere(point, color, Vec3f());
     } else {
-      _drawer->drawVector(point, point2, color);
+      _drawer->drawVector(point, point2, _ymin, _ymax, color);
     }
   }
 }

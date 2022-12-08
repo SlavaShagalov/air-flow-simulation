@@ -29,8 +29,19 @@ class MainWindow : public QMainWindow {
 
   ~MainWindow() override;
 
- private slots:
+  void closeEvent(QCloseEvent* event) override {
+    emit finishAppSignal();
+
+    event->accept();
+  }
+
+ public slots:
   void start();
+
+  // from MainWorker
+  void getFpsSlot(int FPS, size_t np);
+  void simRunnedSlot();
+  void simStoppedSlot();
 
   // mouse and keyboard handle
   void mousePressSlot(QMouseEvent* event);
@@ -52,7 +63,7 @@ class MainWindow : public QMainWindow {
   void on_rightCamBtn_clicked();
   void on_leftCamBtn_clicked();
 
-  //
+  // zone size
   void on_lengthSpinBox_valueChanged(double arg1);
   void on_widthSpinBox_valueChanged(double arg1);
   void on_heightSpinBox_valueChanged(double arg1);
@@ -106,6 +117,11 @@ class MainWindow : public QMainWindow {
   void extStiffChangedSignal(int);
   void startSpeedChangedSignal(int);
 
+  // zone size
+  void lengthChangedSignal(double);
+  void widthChangedSignal(double);
+  void heightChangedSignal(double);
+
   // model
   void delModelSignal();
 
@@ -119,4 +135,15 @@ class MainWindow : public QMainWindow {
 
   void setModelMouseObjectSignal();
   void setCameraMouseObjectSignal();
+
+  // app
+  void finishAppSignal();
+
+  // model view radio buttons
+  void setWireframeViewSignal();
+  void setSimpleViewSignal();
+  void setGourandViewSignal();
+
+  // zone view
+  void setZoneViewSignal(bool value);
 };

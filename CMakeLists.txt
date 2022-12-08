@@ -135,7 +135,6 @@ set(SRCS
         App/Applied/Exceptions/camera_exceptions.h
         App/Applied/Exceptions/load_exceptions.h
         App/Applied/Exceptions/model_exceptions.h
-        App/Applied/Exceptions/ui_exceptions.h
         App/Applied/Facade/facade.h
         App/Applied/Image/image.cpp
         App/Applied/Image/image.h

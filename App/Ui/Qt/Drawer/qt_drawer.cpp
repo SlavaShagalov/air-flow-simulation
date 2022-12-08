@@ -187,7 +187,7 @@ void QtDrawer::drawQuadrangle(Vec3f &v1, Vec3f &v2, Vec3f &v3, Vec3f &v4, float 
 //  }
 //}
 
-void QtDrawer::drawTriangle(Vec3f &v1, Vec3f &v2, Vec3f &v3, const Color &color = Color()) {
+void QtDrawer::drawTriangle(Vec3f &v1, Vec3f &v2, Vec3f &v3, const int ymin, const int ymax, const Color &color) {
   // convert input data
   int x1 = v1.x(), x2 = v2.x(), x3 = v3.x();
   int y1 = v1.y(), y2 = v2.y(), y3 = v3.y();
@@ -256,7 +256,7 @@ void QtDrawer::drawTriangle(Vec3f &v1, Vec3f &v2, Vec3f &v3, const Color &color 
 
     // fill horizontal line
     for (int x = xBeg; x <= xEnd; x++) {
-      if (x < 0 || x >= _width || y < 0 || y >= _height)
+      if (x < 0 || x >= _width || y < ymin || y >= ymax)
         continue;
 
       if (xEnd == xBeg) {
@@ -309,7 +309,7 @@ void QtDrawer::drawTriangle(Vec3f &v1, Vec3f &v2, Vec3f &v3, const Color &color 
 
     // fill horizontal line
     for (int x = xBeg; x <= xEnd; x++) {
-      if (x < 0 || x >= _width || y < 0 || y >= _height)
+      if (x < 0 || x >= _width || y < ymin || y >= ymax)
         continue;
 
       if (xEnd == xBeg) {
@@ -492,14 +492,14 @@ void QtDrawer::drawTriangle(Vec3f &v1, Vec3f &v2, Vec3f &v3, float &_i1, float &
 }
 
 ///// realization: use bresenham int algorithm
-void QtDrawer::drawLine(const Vec3f &v1, const Vec3f &v2, const Color &color) {
+void QtDrawer::drawLine(const Vec3f &v1, const Vec3f &v2, int ymin, int ymax, const Color &color) {
   QColor qColor(color.red(), color.green(), color.blue(), color.alpha());
 
   const int x1 = v1.x(), y1 = v1.y(), x2 = v2.x(), y2 = v2.y();
   const float z1 = v1.z(), z2 = v2.z();
 
   if (x1 == x2 && y1 == y2) {
-    if (x1 >= 0 && x1 < _width && y1 >= 0 && y1 < _height) {
+    if (x1 >= 0 && x1 < _width && y1 >= ymin && y1 < ymax) {
       int idx = x1 + y1 * _width;
       float zMax = std::max(z1, z2);
       if (_zBuffer[idx] < zMax) {
@@ -532,7 +532,7 @@ void QtDrawer::drawLine(const Vec3f &v1, const Vec3f &v2, const Color &color) {
   float z;
 
   for (int i = 0; i <= abs_dx; i++) {
-    if (x >= 0 && x < _width && y >= 0 && y < _height) {
+    if (x >= 0 && x < _width && y >= ymin && y < ymax) {
       if (dx == 0) {
         z = z1 + ((float)(y - y1) / (float)(dy)) * dz;
       } else {
@@ -661,20 +661,20 @@ void QtDrawer::drawLineWidth(const Vec3f &v1, const Vec3f &v2, const Color &colo
   int i;
   float wy, wx;
 
-  drawLine(Vec3f(x1, y1, z1), Vec3f(x2, y2, z2), color);
+//  drawLine(Vec3f(x1, y1, z1), Vec3f(x2, y2, z2), _ymin, _ymax, color);
   Color tmp = Color(color.red(), color.green(), color.blue(), color.alpha() - 20);
   if ((y2 - y1) / (x2 - x1) < 1) {
     wy = (thickness - 1) * sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)) / (2 * fabs(x2 - x1));
     for (i = 0; i < wy; i++) {
-      drawLine(Vec3f(x1, y1 - i, z1), Vec3f(x2, y2 - i, z2), tmp);
-      drawLine(Vec3f(x1, y1 + i, z1), Vec3f(x2, y2 + i, z2), tmp);
+//      drawLine(Vec3f(x1, y1 - i, z1), Vec3f(x2, y2 - i, z2), tmp);
+//      drawLine(Vec3f(x1, y1 + i, z1), Vec3f(x2, y2 + i, z2), tmp);
       tmp.setAlpha(tmp.alpha() - 20);
     }
   } else {
     wx = (thickness - 1) * sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)) / (2 * fabs(y2 - y1));
     for (i = 0; i < wx; i++) {
-      drawLine(Vec3f(x1 - i, y1, z1), Vec3f(x2 - i, y2, z2), tmp);
-      drawLine(Vec3f(x1 + i, y1, z1), Vec3f(x2 + i, y2, z2), tmp);
+//      drawLine(Vec3f(x1 - i, y1, z1), Vec3f(x2 - i, y2, z2), tmp);
+//      drawLine(Vec3f(x1 + i, y1, z1), Vec3f(x2 + i, y2, z2), tmp);
       tmp.setAlpha(tmp.alpha() - 20);
     }
   }
@@ -710,22 +710,22 @@ void QtDrawer::drawSphere(const Vec3f &point, const Color &color, const Vec3f &v
 }
 
 // TODO: Optimize
-void QtDrawer::drawVector(const Vec3f &v1, const Vec3f &v2, const Color &color) {
+void QtDrawer::drawVector(const Vec3f &v1, const Vec3f &v2, int ymin, int ymax, const Color &color) {
   //  qDebug() << "QtDrawer::drawVector() START";
-  drawLine(v1, v2, color);
+  drawLine(v1, v2, ymin, ymax, color);
 
   Vec3f v((v1.x() - v2.x()) / 3, (v1.y() - v2.y()) / 3, v2.z());
   const float angle = 25.0 / 180 * M_PI;
 
   float x = cos(angle) * (v.x()) - sin(angle) * (v.y()) + v2.x();
   float y = sin(angle) * (v.x()) + cos(angle) * (v.y()) + v2.y();
-  drawLine(v2, Vec3f(x, y, v.z()), color);  // 1st extra line
+  drawLine(v2, Vec3f(x, y, v.z()), ymin, ymax, color);  // 1st extra line
 
   //  //  drawLineWidth(v2, Vec3f(x, y, v.z()), color, 3);  // 1st extra line
 
   x = cos(-angle) * (v.x()) - sin(-angle) * (v.y()) + v2.x();
   y = sin(-angle) * (v.x()) + cos(-angle) * (v.y()) + v2.y();
-  drawLine(v2, Vec3f(x, y, v.z()), color);  // 2st extra line
+  drawLine(v2, Vec3f(x, y, v.z()), ymin, ymax, color);  // 2st extra line
 
   //  Vec3f vt1 = Vec3f(v2.x(), v2.y(), v2.z());
   //  Vec3f vt2 = Vec3f(x, y, v2.z());
@@ -751,16 +751,16 @@ void QtDrawer::clear() {
 
 void QtDrawer::update() {
   //  qDebug() << "updateScene()";
-  std::cout << "[DBG]: QtDrawer::update()\n";
+  //  std::cout << "[DBG]: QtDrawer::update()\n";
   _qScene->clear();
-  //  _qScene->addPixmap(QPixmap::fromImage(*_qImage));
-//  for (int i = 0; i < 300; i++) {
-//    _qScene->addLine(i, 3, 2, i * 2, QPen(Qt::red));
-//  }
+  _qScene->addPixmap(QPixmap::fromImage(*_qImage));
+  //  for (int i = 0; i < 300; i++) {
+  //    _qScene->addLine(i, 3, 2, i * 2, QPen(Qt::red));
+  //  }
 
   //  for (int i = 0; i < 300; i++) {
   //    _qScene->addLine(i, 3, 2, i * 2, QPen(Qt::red));
   //  }
 
-  std::cout << "[DBG]: updated\n";
+  //  std::cout << "[DBG]: updated\n";
 }

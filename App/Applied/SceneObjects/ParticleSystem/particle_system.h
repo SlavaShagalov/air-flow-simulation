@@ -110,7 +110,7 @@ class ParticleSystem : public VisibleObject {
 
   // Grid
   std::vector<int> _grid;
-  std::vector<int> _gridCnt;
+//  std::vector<int> _gridCnt;
   int _gridTotal{};
   Vec3f _gridMin;  // volume of grid (may not match domain volume exactly)
   Vec3f _gridMax;
@@ -121,7 +121,7 @@ class ParticleSystem : public VisibleObject {
   int _gridCell[8]{};
 
   // Neighbor Table
-  unsigned short _neighborTable[65536]{};
+  unsigned short _neighborCount[65536]{};
   unsigned short _neighbor[65536][MAX_NEIGHBOR]{};
   float _neighborDist[65536][MAX_NEIGHBOR]{};
 

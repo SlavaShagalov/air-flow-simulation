@@ -1,7 +1,9 @@
 #pragma once
 
+#include <QApplication>
 #include <QGraphicsScene>
 #include <QObject>
+#include <chrono>
 
 // scene objects
 #include "particle_system.h"
@@ -38,49 +40,104 @@ class MainWorker : public QObject {
   enum MouseObject { CAMERA, MODEL, LIGHT };
 
  public:
-  MainWorker() : _simWorker() {
+  MainWorker(QApplication& app) : _simWorker(), _app(app) {
     std::cout << "[DBG]: MainWorker()\n";
     connectUiWorker();
+
+    while (!_finishApp) {  // custom event loop
+      _app.processEvents();
+      if (_simRunned) {
+        if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - _prev_time).count() >
+            1) {
+          // send FPC
+          emit sendFpsSignal(_FPS, psys->_particles.size());
+          _FPS = 0;
+          _prev_time = std::chrono::steady_clock::now();
+        }
+        //        std::cout << "[DBG]: Simulation working...\n";
+        psys->run();
+        updateScene();
+        ++_FPS;
+      }
+    }
+    std::cout << "[DBG]: Event loop finished\n";
   }
   ~MainWorker() override {
     std::cout << "[DBG]: ~MainWorker()\n";
   }
 
+  void updateScene() {
+    // draw scene
+    ParticleMode particleMode;
+    //  if (_ui->circleParticleRadioBtn->isChecked()) {
+    //    particleMode = SPHERE;
+    //  } else {
+    particleMode = VECTOR;
+    //  }
+
+    auto drawSceneCommand = DrawSceneCommand(_scene, _drawer, _camera, _viewMode, particleMode);
+    try {
+      _facade->executeCommand(drawSceneCommand);
+    } catch (BaseException& ex) {
+      //      QMessageBox::warning(this, "Error", QString(ex.what()));
+      std::cout << "[DBG]: Failed to execute DrawSceneCommand\n";
+    }
+  }
+
   void connectUiWorker() {
     //
-    connect(&_uiWorker, &GuiWorker::loadModelSignal, this, &MainWorker::loadModelSlot);
-    connect(&_uiWorker, &GuiWorker::sendQSceneSignal, this, &MainWorker::getQSceneSlot);
-    connect(&_uiWorker, &GuiWorker::runSimulationSignal, this, &MainWorker::runSimulationSlot);
+    connect(&_guiWorker, &GuiWorker::loadModelSignal, this, &MainWorker::loadModelSlot);
+    connect(&_guiWorker, &GuiWorker::sendQSceneSignal, this, &MainWorker::getQSceneSlot);
+    connect(&_guiWorker, &GuiWorker::runSimulationSignal, this, &MainWorker::runSimulationSlot);
 
     // set camera
-    connect(&_uiWorker, &GuiWorker::setCamToTopSignal, this, &MainWorker::setCamToTopSlot);
-    connect(&_uiWorker, &GuiWorker::setCamToBottomSignal, this, &MainWorker::setCamToBottomSlot);
-    connect(&_uiWorker, &GuiWorker::setCamToBackSignal, this, &MainWorker::setCamToBackSlot);
-    connect(&_uiWorker, &GuiWorker::setCamToFrontSignal, this, &MainWorker::setCamToFrontSlot);
-    connect(&_uiWorker, &GuiWorker::setCamToLeftSignal, this, &MainWorker::setCamToLeftSlot);
-    connect(&_uiWorker, &GuiWorker::setCamToRightSignal, this, &MainWorker::setCamToRightSlot);
+    connect(&_guiWorker, &GuiWorker::setCamToTopSignal, this, &MainWorker::setCamToTopSlot);
+    connect(&_guiWorker, &GuiWorker::setCamToBottomSignal, this, &MainWorker::setCamToBottomSlot);
+    connect(&_guiWorker, &GuiWorker::setCamToBackSignal, this, &MainWorker::setCamToBackSlot);
+    connect(&_guiWorker, &GuiWorker::setCamToFrontSignal, this, &MainWorker::setCamToFrontSlot);
+    connect(&_guiWorker, &GuiWorker::setCamToLeftSignal, this, &MainWorker::setCamToLeftSlot);
+    connect(&_guiWorker, &GuiWorker::setCamToRightSignal, this, &MainWorker::setCamToRightSlot);
 
     // parameters changed
-    connect(&_uiWorker, &GuiWorker::emitRateChangedSignal, this, &MainWorker::emitRateChangedSlot);
-    connect(&_uiWorker, &GuiWorker::maxSpeedChangedSignal, this, &MainWorker::maxSpeedChangedSlot);
-    connect(&_uiWorker, &GuiWorker::viscosityChangedSignal, this, &MainWorker::viscosityChangedSlot);
-    connect(&_uiWorker, &GuiWorker::intStiffChangedSignal, this, &MainWorker::intStiffChangedSlot);
-    connect(&_uiWorker, &GuiWorker::extStiffChangedSignal, this, &MainWorker::extStiffChangedSlot);
-    connect(&_uiWorker, &GuiWorker::startSpeedChangedSignal, this, &MainWorker::startSpeedChangedSlot);
+    connect(&_guiWorker, &GuiWorker::emitRateChangedSignal, this, &MainWorker::emitRateChangedSlot);
+    connect(&_guiWorker, &GuiWorker::maxSpeedChangedSignal, this, &MainWorker::maxSpeedChangedSlot);
+    connect(&_guiWorker, &GuiWorker::viscosityChangedSignal, this, &MainWorker::viscosityChangedSlot);
+    connect(&_guiWorker, &GuiWorker::intStiffChangedSignal, this, &MainWorker::intStiffChangedSlot);
+    connect(&_guiWorker, &GuiWorker::extStiffChangedSignal, this, &MainWorker::extStiffChangedSlot);
+    connect(&_guiWorker, &GuiWorker::startSpeedChangedSignal, this, &MainWorker::startSpeedChangedSlot);
 
     // model
-    connect(&_uiWorker, &GuiWorker::delModelSignal, this, &MainWorker::delModelSlot);
+    connect(&_guiWorker, &GuiWorker::delModelSignal, this, &MainWorker::delModelSlot);
 
     // devices
-    connect(&_uiWorker, &GuiWorker::mousePressSignal, this, &MainWorker::mousePressSlot);
-    connect(&_uiWorker, &GuiWorker::mouseReleaseSignal, this, &MainWorker::mouseReleaseSlot);
-    connect(&_uiWorker, &GuiWorker::mouseMoveSignal, this, &MainWorker::mouseMoveSlot);
-    connect(&_uiWorker, &GuiWorker::wheelSignal, this, &MainWorker::wheelSlot);
-    connect(&_uiWorker, &GuiWorker::keyPressSignal, this, &MainWorker::keyPressSlot);
-    connect(&_uiWorker, &GuiWorker::keyReleaseSignal, this, &MainWorker::keyReleaseSlot);
+    connect(&_guiWorker, &GuiWorker::mousePressSignal, this, &MainWorker::mousePressSlot);
+    connect(&_guiWorker, &GuiWorker::mouseReleaseSignal, this, &MainWorker::mouseReleaseSlot);
+    connect(&_guiWorker, &GuiWorker::mouseMoveSignal, this, &MainWorker::mouseMoveSlot);
+    connect(&_guiWorker, &GuiWorker::wheelSignal, this, &MainWorker::wheelSlot);
+    connect(&_guiWorker, &GuiWorker::keyPressSignal, this, &MainWorker::keyPressSlot);
+    connect(&_guiWorker, &GuiWorker::keyReleaseSignal, this, &MainWorker::keyReleaseSlot);
 
-    connect(&_uiWorker, &GuiWorker::setModelMouseObjectSignal, this, &MainWorker::setModelMouseObjectSlot);
-    connect(&_uiWorker, &GuiWorker::setCameraMouseObjectSignal, this, &MainWorker::setCameraMouseObjectSlot);
+    connect(&_guiWorker, &GuiWorker::setModelMouseObjectSignal, this, &MainWorker::setModelMouseObjectSlot);
+    connect(&_guiWorker, &GuiWorker::setCameraMouseObjectSignal, this, &MainWorker::setCameraMouseObjectSlot);
+
+    connect(&_guiWorker, &GuiWorker::finishAppSignal, this, &MainWorker::finishAppSlot);
+
+    // zone size
+    connect(&_guiWorker, &GuiWorker::lengthChangedSignal, this, &MainWorker::lengthChangedSlot);
+    connect(&_guiWorker, &GuiWorker::widthChangedSignal, this, &MainWorker::widthChangedSlot);
+    connect(&_guiWorker, &GuiWorker::heightChangedSignal, this, &MainWorker::heightChangedSlot);
+
+    // to Gui
+    connect(this, &MainWorker::sendFpsSignal, &_guiWorker, &GuiWorker::getFpsSlot);
+    connect(this, &MainWorker::simRunned, &_guiWorker, &GuiWorker::simRunnedSignal);
+    connect(this, &MainWorker::simStopped, &_guiWorker, &GuiWorker::simStoppedSignal);
+
+    // model view radio buttons
+    connect(&_guiWorker, &GuiWorker::setWireframeViewSignal, this, &MainWorker::setWireframeViewSlot);
+    connect(&_guiWorker, &GuiWorker::setSimpleViewSignal, this, &MainWorker::setSimpleViewSlot);
+    connect(&_guiWorker, &GuiWorker::setGourandViewSignal, this, &MainWorker::setGourandViewSlot);
+
+    connect(&_guiWorker, &GuiWorker::setZoneViewSignal, this, &MainWorker::setZoneViewSlot);
   }
 
   void scaleModel(double kx, double ky, double kz) {
@@ -181,11 +238,16 @@ class MainWorker : public QObject {
     _nObjects++;
   }
 
-  void buildSimZone() {
+  void rebuildSimZone() {
+    std::cout << "[DBG]: rebuildSimZone()\n";
+    std::cout << "[DBG]: Before: zoneId=" << _zoneId << "; nObjects=" << _nObjects << std::endl;
     if (_zoneId != -1) {
       auto removeModelCommand = RemoveModelCommand(_zoneId);
       _facade->executeCommand(removeModelCommand);
-      _nObjects--;
+      --_nObjects;
+      if (_modelId > _zoneId) {
+        --_modelId;
+      }
       _zoneId = -1;
     }
 
@@ -284,11 +346,15 @@ class MainWorker : public QObject {
       _zoneId = _nObjects;
       _nObjects++;
     }
+    std::cout << "[DBG]: After: zoneId=" << _zoneId << "; nObjects=" << _nObjects << std::endl;
+    std::cout << "[DBG]: After: model id=" << _modelId<< std::endl;
+    updateScene();
   }
 
  public slots:
   void loadModelSlot(const QString& fileName) {
-    //    std::cout << "[DBG]: MainWorker::loadModelSlot()\n";
+    std::cout << "[DBG]: MainWorker::loadModelSlot()\n";
+    std::cout << "[DBG]: Before: modelId=" << _modelId << "; nObjects=" << _nObjects << std::endl;
 
     _simWorker.setRunning(false);
 
@@ -309,14 +375,15 @@ class MainWorker : public QObject {
     _modelId = _nObjects;
     _nObjects++;
 
-    //    _buildSimZone();
+    //    rebuildSimZone();
 
     //  _ui->delModelBtn->setEnabled(true);
     //  //  _ui->loadPolygonalModelBtn->setDisabled(true);
     //  _ui->modelRadioBtn->setEnabled(true);
     //  _ui->runSimBtn->setEnabled(true);
     //
-    //    updateScene();
+    std::cout << "[DBG]: After: modelId=" << _modelId << "; nObjects=" << _nObjects << std::endl;
+    updateScene();
   }
 
   void getQSceneSlot(QGraphicsScene* qScene) {
@@ -345,8 +412,8 @@ class MainWorker : public QObject {
     addDefaultCamera();
     addDefaultLight();
     addAxis();
-    //    updateScene();
-    buildSimZone();
+    rebuildSimZone();
+    updateScene();
   }
 
   void runSimulationSlot(int nParticles) {
@@ -363,64 +430,71 @@ class MainWorker : public QObject {
         psys->initialize(nParticles);
         psys->createExample(_xMin * 30, _xMax * 30, _yMin * 30, _yMax * 30, _zMin * 30, _zMax * 30);
       }
-      _simWorker.setFields(_scene, _drawer, _camera, psys, _facade, _qScene);
+      //      _simWorker.setFields(_scene, _drawer, _camera, psys, _facade, _qScene);
+      _FPS = 0;
+      _prev_time = std::chrono::steady_clock::now();
+      //      connect(&qThread, &QThread::started, &_simWorker, &SimWorker::run);
+      //      connect(&_simWorker, &SimWorker::finished, &qThread, &QThread::terminate);
+      //      _simWorker.moveToThread(&qThread);
+      //      _simWorker.setRunning(true);
+      //      qThread.start();
+      emit simRunned();
       _simRunned = true;
-      connect(&qThread, &QThread::started, &_simWorker, &SimWorker::run);
-      connect(&_simWorker, &SimWorker::finished, &qThread, &QThread::terminate);
-      _simWorker.moveToThread(&qThread);
-      _simWorker.setRunning(true);
-      qThread.start();
-      //      _ui->runSimBtn->setText("Остановить симуляцию");
     } else {
-      _simWorker.setRunning(false);
+      //      _simWorker.setRunning(false);
       //      qThread.;
       //      _simWorker.stop();
+      emit sendFpsSignal(0, 0);
+      emit simStopped();
       _simRunned = false;
-      //      _ui->runSimBtn->setText("Запустить симуляцию");
     }
   }
+
+  void finishAppSlot() {
+    _finishApp = true;
+  };
 
   // set camera
   void setCamToTopSlot() {
     _camera->setCenter(Vec3f(0, 0, 0));
     _camera->setUp(Vec3f(0, 1, 0));
     _camera->setEye(Vec3f(0, 0, 3));
-    //    updateScene();
+    updateScene();
   }
 
   void setCamToBottomSlot() {
     _camera->setCenter(Vec3f(0, 0, 0));
     _camera->setUp(Vec3f(0, 1, 0));
     _camera->setEye(Vec3f(0, 0, -3));
-    //    updateScene();
+    updateScene();
   }
 
   void setCamToFrontSlot() {
     _camera->setCenter(Vec3f(0, 0, 0));
     _camera->setUp(Vec3f(0, 0, 1));
     _camera->setEye(Vec3f(3, 0, 0));
-    //    updateScene();
+    updateScene();
   }
 
   void setCamToBackSlot() {
     _camera->setCenter(Vec3f(0, 0, 0));
     _camera->setUp(Vec3f(0, 0, 1));
     _camera->setEye(Vec3f(-3, 0, 0));
-    //    updateScene();
+    updateScene();
   }
 
   void setCamToRightSlot() {
     _camera->setCenter(Vec3f(0, 0, 0));
     _camera->setUp(Vec3f(0, 0, 1));
     _camera->setEye(Vec3f(0, -3, 0));
-    //    updateScene();
+    updateScene();
   }
 
   void setCamToLeftSlot() {
     _camera->setCenter(Vec3f(0, 0, 0));
     _camera->setUp(Vec3f(0, 0, 1));
     _camera->setEye(Vec3f(0, 3, 0));
-    //    updateScene();
+    updateScene();
   }
 
   // modeling parameters
@@ -465,6 +539,31 @@ class MainWorker : public QObject {
     }
   }
 
+  // zone size
+  void lengthChangedSlot(double value) {
+    _length = (float)value;
+    if (_psysId != -1) {
+      removeParticleSystem();
+    }
+    rebuildSimZone();
+  }
+
+  void widthChangedSlot(double value) {
+    _width = (float)value;
+    if (_psysId != -1) {
+      removeParticleSystem();
+    }
+    rebuildSimZone();
+  }
+
+  void heightChangedSlot(double value) {
+    _height = (float)value;
+    if (_psysId != -1) {
+      removeParticleSystem();
+    }
+    rebuildSimZone();
+  }
+
   //
   void removeParticleSystem() {
     auto removeParticleSystemCommand = RemoveParticleSystemCommand(_psysId);
@@ -492,15 +591,7 @@ class MainWorker : public QObject {
     _modelId = -1;
     _nObjects--;
 
-    //    _ui->delModelBtn->setDisabled(true);
-    //    _ui->loadPolygonalModelBtn->setEnabled(true);
-
-    //    if (_ui->modelRadioBtn->isChecked())
-    //      _ui->cameraRadioBtn->setChecked(true);
-    //    _ui->modelRadioBtn->setDisabled(true);
-    //    _ui->runSimBtn->setDisabled(true);
-
-    //    updateScene();
+    updateScene();
   }
 
   // transform model methods
@@ -509,7 +600,7 @@ class MainWorker : public QObject {
 
     try {
       _facade->executeCommand(moveModelCommand);
-      //      updateScene();
+      updateScene();
     } catch (const BaseException& ex) {
       //      QMessageBox::warning(this, "Error", QString(ex.what()));
     }
@@ -520,7 +611,7 @@ class MainWorker : public QObject {
 
     try {
       _facade->executeCommand(rotateModelComand);
-      //      updateScene();
+      updateScene();
     } catch (const BaseException& ex) {
       //      QMessageBox::warning(this, "Error", QString(ex.what()));
     }
@@ -532,7 +623,7 @@ class MainWorker : public QObject {
 
     try {
       _facade->executeCommand(rotateCameraComand);
-      //      updateScene();
+      updateScene();
     } catch (const BaseException& ex) {
       //      QMessageBox::warning(this, "Error", QString(ex.what()));
     }
@@ -559,8 +650,6 @@ class MainWorker : public QObject {
 
     _mouseLeftButtonPressed = false;
     _mouseRightButtonPressed = false;
-    _xActive = false;
-    _yActive = false;
 
     event->accept();
   }
@@ -599,7 +688,6 @@ class MainWorker : public QObject {
       } else {
       }
     }
-    //    updateScene();
 
     event->accept();
   }
@@ -617,7 +705,6 @@ class MainWorker : public QObject {
         removeParticleSystem();
       }
       scaleModel(factor, factor, factor);
-      //      updateScene();
     } else {
     }
 
@@ -640,6 +727,37 @@ class MainWorker : public QObject {
     _mouseObject = CAMERA;
   }
 
+  // model view radio buttons
+  void setWireframeViewSlot() {
+    //    std::cout << "[DBG]: setWireframeViewSlot()\n";
+    _viewMode = WIREFRAME;
+    updateScene();
+  }
+
+  void setSimpleViewSlot() {
+    //    std::cout << "[DBG]: setSimpleViewSlot()\n";
+    _viewMode = SIMPLE;
+    updateScene();
+  }
+
+  void setGourandViewSlot() {
+    //    std::cout << "[DBG]: setGourandViewSlot()\n";
+    _viewMode = GOURAND;
+    updateScene();
+  }
+
+  // zone view
+  void setZoneViewSlot(bool value) {
+    _isZoneVisible = value;
+    rebuildSimZone();
+    updateScene();
+  }
+
+ signals:
+  void sendFpsSignal(int, size_t);
+  void simRunned();
+  void simStopped();
+
  private:
   // objects
   std::shared_ptr<Facade> _facade = std::make_shared<Facade>();
@@ -651,8 +769,8 @@ class MainWorker : public QObject {
 
   // id
   size_t _nObjects = 0;
-  int _cameraId;
-  int _modelId;
+  int _cameraId = -1;
+  int _modelId = -1;
   int _zoneId = -1;
   int _psysId = -1;
 
@@ -669,19 +787,16 @@ class MainWorker : public QObject {
   int _max_speed = 50;
   int _emit_rate = 50;
   int _int_stiff = 50;
-  int _ext_stiff = 50;
+  int _ext_stiff = 70;
 
   // mouse
   QPoint _prevMousePos;
   bool _mouseRightButtonPressed = false;
   bool _mouseLeftButtonPressed = false;
-  bool _xActive = false;
-  bool _yActive = false;
-  bool _f1 = false;
-  bool _f2 = false;
 
   // enum
   MouseObject _mouseObject = CAMERA;
+  DrawMode _viewMode = SIMPLE;
 
   // zone
   float _length = 3.0;
@@ -689,12 +804,20 @@ class MainWorker : public QObject {
   float _height = 2.0;
   bool _isZoneVisible = true;
 
+  bool _finishApp = false;
+
  private:
   // workers
-  GuiWorker _uiWorker;
+  GuiWorker _guiWorker;
   SimWorker _simWorker;
   QThread qThread;
   //  DrawWorker _drawWorker;
   //  NetWorker _netWorker;
   //  LoadWorker _loadWorker;
+
+  int _FPS = 0;
+  std::chrono::time_point<std::chrono::steady_clock> _prev_time;
+
+  // app
+  QApplication& _app;
 };

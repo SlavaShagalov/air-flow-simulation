@@ -10,15 +10,17 @@ int main(int argc, char* argv[]) {
 
   QApplication app(argc, argv);
 
-  MainWorker mainWorker;
-//  QThread qThread;
-//  mainWorker.moveToThread(&qThread);
-//  qThread.start();
+  MainWorker mainWorker(app);
+  QThread qThread;
+  mainWorker.moveToThread(&qThread);
+  qThread.start();
+  std::cout << "MainWorker started in other thread.\n";
 
   QApplication::exec();
+  std::cout << "QApplication::exec() called.\n";
 
-//  qThread.quit();
-//  qThread.wait();
+  //  qThread.quit();
+  //  qThread.wait();
 
   return 0;
 }

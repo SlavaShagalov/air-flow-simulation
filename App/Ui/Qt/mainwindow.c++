@@ -41,6 +41,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), _ui(new Ui::MainW
   _ui->ViewParticleGroupBox->setVisible(false);
   _ui->lightRadioBtn->setVisible(false);
   _ui->modelPressureCheckBox->setVisible(false);
+  _ui->int_stiff_label->setVisible(false);
+  _ui->int_stiff->setVisible(false);
+  _ui->ext_stiff->setVisible(false);
+  _ui->ext_stiff_label->setVisible(false);
 
   // setup timer
   _timer.setSingleShot(true);
@@ -50,7 +54,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), _ui(new Ui::MainW
 
 MainWindow::~MainWindow() {
   std::cout << "[DBG]: ~MainWindow()\n";
-//  delete _qScene;
+  //  delete _qScene;
   delete _ui;
 }
 
@@ -62,27 +66,17 @@ void MainWindow::start() {
   // setup
   connectDevicesSlots();
   setupQScene();
+
+  // connections
   connect(_ui->modelRadioBtn, &QRadioButton::pressed, this, &MainWindow::setModelMouseObjectSignal);
   connect(_ui->cameraRadioBtn, &QRadioButton::pressed, this, &MainWindow::setCameraMouseObjectSignal);
 
-  //  _t_sim = std::thread([&] { simulation_thread_func(); });
-  //    qtThr = Thread("Sim Worker", this);
-  //  _t_sim = std::thread(&MainWindow::simulation_thread_func, this);
-  //  _t_sim = std::thread(MainWindow::simulation_thread_func);
-  //  _t_sim.detach();
+  connect(_ui->wireframeRadioBtn, &QRadioButton::pressed, this, &MainWindow::setWireframeViewSignal);
+  connect(_ui->simpleRadioBtn, &QRadioButton::pressed, this, &MainWindow::setSimpleViewSignal);
+  connect(_ui->guroRadioBtn, &QRadioButton::pressed, this, &MainWindow::setGourandViewSignal);
 
-  // test calls
-  //  on_loadPolygonalModelBtn_clicked();
-  //
-  //  while (true) {  // custom event loop
-  //    _app->processEvents();
-  //
-  //    if (_simRunned) {
-  //      psys->run();
-  //      _ui->cur_n_particles->setText(QString::number(psys->_particles.size()));
-  //      _updateScene();
-  //    }
-  //  }
+  // zone view
+  connect(_ui->zoneViewCheckBox, &QCheckBox::clicked, this, &MainWindow::setZoneViewSignal);
 }
 
 // mouse and keyboard handle
@@ -182,6 +176,7 @@ void MainWindow::on_runSimBtn_clicked() {
   emit runSimulationSignal(_ui->nParticlesSpinBox->value());
 }
 
+// camera control
 void MainWindow::on_topCamBtn_clicked() {
   emit setCamToTopSignal();
 }
@@ -206,35 +201,26 @@ void MainWindow::on_leftCamBtn_clicked() {
   emit setCamToLeftSignal();
 }
 
+// zone size
 void MainWindow::on_lengthSpinBox_valueChanged(double arg1) {
-  //  if (_psysId != -1) {
-  //    _removeParticleSystem();
-  //  }
-  //
-  //  _buildSimZone();
+  emit lengthChangedSignal(arg1);
 }
 
 void MainWindow::on_widthSpinBox_valueChanged(double arg1) {
-  //  if (_psysId != -1) {
-  //    _removeParticleSystem();
-  //  }
-  //
-  //  _buildSimZone();
+  emit widthChangedSignal(arg1);
 }
 
 void MainWindow::on_heightSpinBox_valueChanged(double arg1) {
-  //  if (_psysId != -1) {
-  //    _removeParticleSystem();
-  //  }
-  //
-  //  _buildSimZone();
+  emit heightChangedSignal(arg1);
 }
 
+// zone view
+void MainWindow::on_zoneViewCheckBox_stateChanged(int arg1) {
+}
+
+// model control
 void MainWindow::on_delModelBtn_clicked() {
   emit delModelSignal();
-}
-
-void MainWindow::on_zoneViewCheckBox_stateChanged(int arg1) {
 }
 
 // modeling parameters
@@ -260,4 +246,20 @@ void MainWindow::on_ext_stiff_valueChanged(int value) {
 
 void MainWindow::on__start_speed_valueChanged(int value) {
   emit startSpeedChangedSignal(value);
+}
+
+// from MainWorker
+void MainWindow::getFpsSlot(int FPS, size_t nParticles) {
+  _ui->cur_n_particles->setNum(int(nParticles));
+  _ui->fps->setNum(FPS);
+}
+
+void MainWindow::simRunnedSlot() {
+  _simRunnedDisableInterface();
+  _ui->runSimBtn->setText("Остановить симуляцию");
+}
+
+void MainWindow::simStoppedSlot() {
+  _simStoppedEnableInterface();
+  _ui->runSimBtn->setText("Запустить симуляцию");
 }
