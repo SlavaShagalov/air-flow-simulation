@@ -43,150 +43,6 @@ void QtDrawer::drawQuadrangle(Vec3f &v1, Vec3f &v2, Vec3f &v3, Vec3f &v4, float 
                               const Color &color) {
 }
 
-//// simple draw
-// void QtDrawer::drawTriangle(Vec3f& v1, Vec3f& v2, Vec3f& v3,
-//                            const Color& color = Color()) {
-//  // convert input data
-//  int x1 = v1.x(), x2 = v2.x(), x3 = v3.x();
-//  int y1 = v1.y(), y2 = v2.y(), y3 = v3.y();
-//  int z1 = v1.z(), z2 = v2.z(), z3 = v3.z();
-
-//  // sort points
-//  if (y2 < y1) {
-//    std::swap(x1, x2);
-//    std::swap(y1, y2);
-//    std::swap(z1, z2);
-//  }
-//  if (y3 < y1) {
-//    std::swap(x1, x3);
-//    std::swap(y1, y3);
-//    std::swap(z1, z3);
-//  }
-//  if (y2 > y3) {
-//    std::swap(x2, x3);
-//    std::swap(y2, y3);
-//    std::swap(z2, z3);
-//  }
-
-//  if (y1 == y3)
-//    return;
-
-//  // find steps
-//  const int dy13 = y3 - y1, dy12 = y2 - y1, dy23 = y3 - y2;
-//  const int dx13 = x3 - x1, dx12 = x2 - x1, dx23 = x3 - x2;
-
-//  float xStep13, xStep12, xStep23;
-//  if (y3 != y1)
-//    xStep13 = (float)dx13 / (float)dy13;
-//  else
-//    xStep13 = 0;
-//  if (y2 != y1)
-//    xStep12 = (float)dx12 / (float)dy12;
-//  else
-//    xStep12 = 0;
-//  if (y3 != y2)
-//    xStep23 = (float)dx23 / (float)dy23;
-//  else
-//    xStep23 = 0;
-
-//  float xBeg = x1, xEnd = x1, zBeg, zEnd, z;
-//  float _xStep13 = xStep13;
-
-//  bool flag = false;
-//  if (xStep13 > xStep12) {
-//    std::swap(xStep13, xStep12);
-//    flag = true;
-//  }
-//  float alpha, beta, phi;
-
-//  // fill bottom triangle
-//  for (int y = y1; y < y2; y++) {
-//    alpha = (float)(y - y1) / (float)(y3 - y1);
-//    beta = (float)(y - y1) / (float)(y2 - y1);
-
-//    zBeg = z1 + alpha * (z3 - z1);
-//    zEnd = z1 + beta * (z2 - z1);
-
-//    if (flag) {
-//      std::swap(zBeg, zEnd);
-//    }
-
-//    // fill horizontal line
-//    for (int x = xBeg; x <= xEnd; x++) {
-//      if (x < 0 || x >= _width || y < 0 || y >= _height)
-//        continue;
-
-//      phi = xEnd == xBeg ? 1 : (x - xBeg) / (xEnd - xBeg);
-
-//      z = zBeg + phi * (zEnd - zBeg);
-
-//      int idx = x + y * _width;
-//      if (_zBuffer[idx] < z) {
-//        _zBuffer[idx] = z;
-
-//        _qImage->setPixelColor(
-//        x, y, QColor(color.red(), color.green(), color.blue(),
-//        color.alpha()));
-//      }
-//    }
-
-//    xBeg += xStep13;
-//    xEnd += xStep12;
-//  }
-
-//  flag = false;
-
-//  if (y1 == y2) {
-//    if (x2 > x1) {
-//      xBeg = x1;
-//      xEnd = x2;
-//    } else {
-//      xBeg = x2;
-//      xEnd = x1;
-//    }
-//  }
-
-//  if (_xStep13 < xStep23) {
-//    flag = true;
-//    std::swap(_xStep13, xStep23);
-//  }
-
-//  // fill top triangle
-//  for (int y = y2; y <= y3; y++) {
-//    alpha = (double)(y - y1) / (double)(y3 - y1);
-//    beta = (double)(y - y2) / (double)(y3 - y2);
-
-//    zBeg = z1 + alpha * (z3 - z1);
-//    zEnd = z2 + beta * (z3 - z2);
-
-//    if (flag) {
-//      std::swap(zBeg, zEnd);
-//    }
-
-//    // fill horizontal line
-//    for (int x = xBeg; x <= xEnd; x++) {
-//      if (x < 0 || x >= _width || y < 0 || y >= _height)
-//        continue;
-
-//      phi = xEnd == xBeg ? 1 : (x - xBeg) / (xEnd - xBeg);
-
-//      z = zBeg + phi * (zEnd - zBeg);
-
-//      int idx = x + y * _width;
-//      if (_zBuffer[idx] < z) {
-//        _zBuffer[idx] = z;
-
-//        _qImage->setPixelColor(
-//        x, y, QColor(color.red(), color.green(), color.blue(),
-//        color.alpha()));
-//      }
-//    }
-
-//    xBeg += _xStep13;
-//    xEnd += xStep23;
-//  }
-//}
-
 void QtDrawer::drawTriangle(Vec3f &v1, Vec3f &v2, Vec3f &v3, const int ymin, const int ymax, const Color &color) {
   // convert input data
   int x1 = v1.x(), x2 = v2.x(), x3 = v3.x();
@@ -564,117 +420,26 @@ void QtDrawer::drawLine(const Vec3f &v1, const Vec3f &v2, int ymin, int ymax, co
   }
 }
 
-/// realization: use DDA algorithm
-// void QtDrawer::drawLine(const Vec3f& v1, const Vec3f& v2, const Color& color)
-// {
-//  QColor qColor(color.red(), color.green(), color.blue(), color.alpha());
-
-//  const int x1 = v1.x(), y1 = v1.y(), x2 = v2.x(), y2 = v2.y();
-//  const float z1 = v1.z(), z2 = v2.z();
-
-//  if (x1 == x2 && y1 == y2) {
-//    if (!(x1 < 0 || x1 >= _width || y1 < 0 || y1 >= _height)) {
-//      int idx = x1 + y1 * _width;
-//      if (_zBuffer[idx] < std::max(z1, z2)) {
-//        _zBuffer[idx] = std::max(z1, z2);
-//        _qImage->setPixelColor(x1, y1, qColor);
-//      }
-//    }
-
-//    return;
-//  }
-
-//  const int dx = x2 - x1, dy = y2 - y1;
-//  const float dz = z2 - z1;
-//  int len = abs(dx);
-//  if (abs(dy) > len)
-//    len = abs(dy);
-
-//  float xStep = (float)dx / len, yStep = (float)dy / len,
-//        zStep = (float)dz / len;
-//  float x = x1, y = y1, z = z1;
-
-//  for (int i = 0; i <= len; i++, x += xStep, y += yStep, z += zStep) {
-//    if (x < 0 || x >= _width || y < 0 || y >= _height)
-//      continue;
-//    //    qDebug() << "(" << x << "," << y << "," << z << ")";
-
-//    int idx = round(x) + round(y) * _width;
-//    if (_zBuffer[idx] < z) {
-//      _zBuffer[idx] = z;
-//      _qImage->setPixelColor(round(x), round(y), qColor);
-//      //        qDebug() << "z if = " << _zBuffer[idx] << "and = " << z;
-//    }
-//  }
-//}
-
-// void QtDrawer::drawLineWidth(const Vec3f& v1, const Vec3f& v2,
-//                             const Color& color, const int width) {
-//  const int x1 = v1.x(), y1 = v1.y(), x2 = v2.x(), y2 = v2.y();
-//  QColor qColor(color.red(), color.green(), color.blue(), color.alpha());
-
-//  float xinc, yinc, x, y;
-//  float dx, dy, e;
-//  dx = abs(x2 - x1);
-//  dy = abs(y2 - y1);
-//  if (x1 < x2)
-//    xinc = 1;
-//  else
-//    xinc = -1;
-//  if (y1 < y2)
-//    yinc = 1;
-//  else
-//    yinc = -1;
-//  x = x1;
-//  y = y1;
-//  _qImage->setPixelColor(round(x), round(y), qColor);
-//  if (dx >= dy) {
-//    e = (2 * dy) - dx;
-//    while (x != x2) {
-//      if (e < 0) {
-//        e += (2 * dy);
-//      } else {
-//        e += (2 * (dy - dx));
-//        y += yinc;
-//      }
-//      x += xinc;
-//      _qImage->setPixelColor(round(x), round(y), qColor);
-//    }
-//  } else {
-//    e = (2 * dx) - dy;
-//    while (y != y2) {
-//      if (e < 0) {
-//        e += (2 * dx);
-//      } else {
-//        e += (2 * (dx - dy));
-//        x += xinc;
-//      }
-//      y += yinc;
-//      _qImage->setPixelColor(round(x), round(y), qColor);
-//    }
-//  }
-//}
-
 void QtDrawer::drawLineWidth(const Vec3f &v1, const Vec3f &v2, const Color &color, const int thickness) {
   const float x1 = v1.x(), y1 = v1.y(), x2 = v2.x(), y2 = v2.y();
   const float z1 = v1.z(), z2 = v2.z();
   int i;
   float wy, wx;
 
-//  drawLine(Vec3f(x1, y1, z1), Vec3f(x2, y2, z2), _ymin, _ymax, color);
+  //  drawLine(Vec3f(x1, y1, z1), Vec3f(x2, y2, z2), _ymin, _ymax, color);
   Color tmp = Color(color.red(), color.green(), color.blue(), color.alpha() - 20);
   if ((y2 - y1) / (x2 - x1) < 1) {
     wy = (thickness - 1) * sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)) / (2 * fabs(x2 - x1));
     for (i = 0; i < wy; i++) {
-//      drawLine(Vec3f(x1, y1 - i, z1), Vec3f(x2, y2 - i, z2), tmp);
-//      drawLine(Vec3f(x1, y1 + i, z1), Vec3f(x2, y2 + i, z2), tmp);
+      //      drawLine(Vec3f(x1, y1 - i, z1), Vec3f(x2, y2 - i, z2), tmp);
+      //      drawLine(Vec3f(x1, y1 + i, z1), Vec3f(x2, y2 + i, z2), tmp);
       tmp.setAlpha(tmp.alpha() - 20);
     }
   } else {
     wx = (thickness - 1) * sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)) / (2 * fabs(y2 - y1));
     for (i = 0; i < wx; i++) {
-//      drawLine(Vec3f(x1 - i, y1, z1), Vec3f(x2 - i, y2, z2), tmp);
-//      drawLine(Vec3f(x1 + i, y1, z1), Vec3f(x2 + i, y2, z2), tmp);
+      //      drawLine(Vec3f(x1 - i, y1, z1), Vec3f(x2 - i, y2, z2), tmp);
+      //      drawLine(Vec3f(x1 + i, y1, z1), Vec3f(x2 + i, y2, z2), tmp);
       tmp.setAlpha(tmp.alpha() - 20);
     }
   }
@@ -702,8 +467,8 @@ void QtDrawer::drawSphere(const Vec3f &point, const Color &color, const Vec3f &v
   //      point.y() + 5 >= _height)
   //    return;
 
-  //  _qScene->addLine(point.x(), point.y(), point.x() + vel.x(),
-  //                   point.y() + vel.y(), QPen(qColor));
+  //  _qScene->addLine(point.x(), point.y(), point.x() + vel_prev_half.x(),
+  //                   point.y() + vel_prev_half.y(), QPen(qColor));
 
   //  _qScene->addRect(point.x(), point.y(), 4, 4, QPen(qColor),
   //  QBrush(qColor));

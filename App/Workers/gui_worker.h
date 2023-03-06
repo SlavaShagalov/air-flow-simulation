@@ -50,6 +50,8 @@ class GuiWorker : public QObject {
     connect(&_mainWindow, &MainWindow::widthChangedSignal, this, &GuiWorker::widthChangedSignal);
     connect(&_mainWindow, &MainWindow::heightChangedSignal, this, &GuiWorker::heightChangedSignal);
 
+    connect(&_mainWindow, &MainWindow::nParticlesChangedSignal, this, &GuiWorker::nParticlesChangedSignal);
+
     // model
     connect(&_mainWindow, &MainWindow::delModelSignal, this, &GuiWorker::delModelSignal);
 
@@ -105,6 +107,8 @@ class GuiWorker : public QObject {
   void intStiffChangedSignal(int);
   void extStiffChangedSignal(int);
   void startSpeedChangedSignal(int);
+
+  void nParticlesChangedSignal(int);
 
   // zone size
   void lengthChangedSignal(double);

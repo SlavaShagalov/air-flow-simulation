@@ -258,10 +258,10 @@ void DrawVisitor::visit(const ParticleSystem& ps) {
     point = Vec3f(tvec[0] / tvec[3], tvec[1] / tvec[3], tvec[2] / tvec[3]);
 
     Vec3f point2;
-    vel = p.vel_eval;
+    vel = p.vel_actual;
     if (vel.length() != 0) {
       vel.normalize();
-      //      vel *= 3;
+      //      vel_prev_half *= 3;
       point2 = Vec3f(p.pos.x() + vel.x(), p.pos.y() + vel.y(), p.pos.z() + vel.z());
 
       point2.x() = point2.x() / 30.0;

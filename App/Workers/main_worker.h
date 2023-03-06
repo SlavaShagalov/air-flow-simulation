@@ -50,12 +50,12 @@ class MainWorker : public QObject {
         if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - _prev_time).count() >
             1) {
           // send FPC
-          emit sendFpsSignal(_FPS, psys->_particles.size());
+          emit sendFpsSignal(_FPS, _psys->_particles.size());
           _FPS = 0;
           _prev_time = std::chrono::steady_clock::now();
+//          std::cout << "[DBG]: Simulation working...\n";
         }
-        //        std::cout << "[DBG]: Simulation working...\n";
-        psys->run();
+        _psys->run();
         updateScene();
         ++_FPS;
       }
@@ -138,6 +138,8 @@ class MainWorker : public QObject {
     connect(&_guiWorker, &GuiWorker::setGourandViewSignal, this, &MainWorker::setGourandViewSlot);
 
     connect(&_guiWorker, &GuiWorker::setZoneViewSignal, this, &MainWorker::setZoneViewSlot);
+
+    connect(&_guiWorker, &GuiWorker::nParticlesChangedSignal, this, &MainWorker::nParticlesChangedSlot);
   }
 
   void scaleModel(double kx, double ky, double kz) {
@@ -150,6 +152,8 @@ class MainWorker : public QObject {
       //      QMessageBox::warning(this, "Error", QString(ex.what()));
       std::cout << "[DBG]: Failed to execute ScaleModelCommand\n";
     }
+
+    updateScene();
   }
 
   void addDefaultCamera() {
@@ -347,7 +351,7 @@ class MainWorker : public QObject {
       _nObjects++;
     }
     std::cout << "[DBG]: After: zoneId=" << _zoneId << "; nObjects=" << _nObjects << std::endl;
-    std::cout << "[DBG]: After: model id=" << _modelId<< std::endl;
+    std::cout << "[DBG]: After: model id=" << _modelId << std::endl;
     updateScene();
   }
 
@@ -376,13 +380,8 @@ class MainWorker : public QObject {
     _nObjects++;
 
     //    rebuildSimZone();
-
-    //  _ui->delModelBtn->setEnabled(true);
-    //  //  _ui->loadPolygonalModelBtn->setDisabled(true);
-    //  _ui->modelRadioBtn->setEnabled(true);
-    //  _ui->runSimBtn->setEnabled(true);
-    //
     std::cout << "[DBG]: After: modelId=" << _modelId << "; nObjects=" << _nObjects << std::endl;
+    rebuildSimZone();
     updateScene();
   }
 
@@ -412,25 +411,34 @@ class MainWorker : public QObject {
     addDefaultCamera();
     addDefaultLight();
     addAxis();
-    rebuildSimZone();
+    setCamToLeftSlot();
+    //    _viewMode = WIREFRAME;
     updateScene();
   }
 
   void runSimulationSlot(int nParticles) {
+    std::cout << "[DBG]: runSimulationSlot()\n";
     if (!_simRunned) {
       if (_psysId == -1) {
-        psys = std::make_shared<ParticleSystem>(_model, model_bound);
+        std::cout << "[DBG]: Create ParticleSystem\n";
+        _psys = std::make_shared<ParticleSystem>(_model, model_bound);
 
-        auto addParticleSystemCommand = AddParticleSystemCommand(psys);
+        auto addParticleSystemCommand = AddParticleSystemCommand(_psys);
         _facade->executeCommand(addParticleSystemCommand);
 
         _psysId = _nObjects;
         _nObjects++;
 
-        psys->initialize(nParticles);
-        psys->createExample(_xMin * 30, _xMax * 30, _yMin * 30, _yMax * 30, _zMin * 30, _zMax * 30);
+        _psys->initialize(_nParticles);
+        _psys->createExample(_xMin * 30, _xMax * 30, _yMin * 30, _yMax * 30, _zMin * 30, _zMax * 30);
+
+        _psys->_emit_rate = 0.2f * ((float)_emit_rate / 100.0f);
+        _psys->_limit = 600.0f * ((float)_max_speed / 100.0f);
+        _psys->_viscosity = 0.4f * ((float)_viscosity / 100.0f);
+        _psys->start_speed = 10 * ((float) _start_speed / 100.0f);
+        std::cout << "[DBG]: start speed = " << _psys->start_speed << std::endl;
       }
-      //      _simWorker.setFields(_scene, _drawer, _camera, psys, _facade, _qScene);
+      //      _simWorker.setFields(_scene, _drawer, _camera, _psys, _facade, _qScene);
       _FPS = 0;
       _prev_time = std::chrono::steady_clock::now();
       //      connect(&qThread, &QThread::started, &_simWorker, &SimWorker::run);
@@ -439,6 +447,8 @@ class MainWorker : public QObject {
       //      _simWorker.setRunning(true);
       //      qThread.start();
       emit simRunned();
+      extStiffChangedSlot(80);
+      _mouseObject = CAMERA;
       _simRunned = true;
     } else {
       //      _simWorker.setRunning(false);
@@ -500,42 +510,43 @@ class MainWorker : public QObject {
   // modeling parameters
   void emitRateChangedSlot(int value) {
     if (_psysId != -1) {
-      psys->_emit_rate = 0.2f * ((float)value / 100.0f);
-      _emit_rate = value;
+      _psys->_emit_rate = 0.2f * ((float)(100 - value) / 100.0f);
+      _emit_rate = 100 - value;
     }
   }
 
   void maxSpeedChangedSlot(int value) {
     if (_psysId != -1) {
-      psys->_limit = 600.0f * ((float)value / 100.0f);
+      _psys->_limit = 600.0f * ((float)value / 100.0f);
       _max_speed = value;
     }
   }
 
   void viscosityChangedSlot(int value) {
     if (_psysId != -1) {
-      psys->_viscosity = 0.4f * ((float)value / 100.0f);
+      _psys->_viscosity = 0.4f * ((float)value / 100.0f);
       _viscosity = value;
     }
   }
 
   void intStiffChangedSlot(int value) {
     if (_psysId != -1) {
-      psys->_ext_stiff = 1.0f * ((float)value / 100.0f);
+      _psys->_ext_stiff = 1.0f * ((float)value / 100.0f);
       _int_stiff = value;
     }
   }
 
   void extStiffChangedSlot(int value) {
     if (_psysId != -1) {
-      psys->_ext_stiff = 20000.0f * ((float)value / 100.0f);
+      _psys->_ext_stiff = 20000.0f * ((float)value / 100.0f);
       _ext_stiff = value;
     }
   }
 
   void startSpeedChangedSlot(int value) {
     if (_psysId != -1) {
-      psys->start_speed = 10 * ((float)value / 100.0f);
+      _psys->start_speed = 10 * ((float)value / 100.0f);
+      _start_speed = value;
     }
   }
 
@@ -753,6 +764,16 @@ class MainWorker : public QObject {
     updateScene();
   }
 
+  // n particles
+  void nParticlesChangedSlot(int value) {
+    std::cout << "[DBG]: nParticlesChangedSlot(): value = " << value << std::endl;
+    _nParticles = value;
+    if (_psysId != -1) {
+      removeParticleSystem();
+    }
+    updateScene();
+  }
+
  signals:
   void sendFpsSignal(int, size_t);
   void simRunned();
@@ -765,7 +786,7 @@ class MainWorker : public QObject {
   std::shared_ptr<BaseDrawer> _drawer;
   shared_ptr<BaseObject> _model;
   shared_ptr<Camera> _camera;
-  std::shared_ptr<ParticleSystem> psys;
+  std::shared_ptr<ParticleSystem> _psys;
 
   // id
   size_t _nObjects = 0;
@@ -786,8 +807,9 @@ class MainWorker : public QObject {
   int _viscosity = 50;
   int _max_speed = 50;
   int _emit_rate = 50;
+  int _start_speed = 50;
   int _int_stiff = 50;
-  int _ext_stiff = 70;
+  int _ext_stiff = 50;
 
   // mouse
   QPoint _prevMousePos;
@@ -805,6 +827,8 @@ class MainWorker : public QObject {
   bool _isZoneVisible = true;
 
   bool _finishApp = false;
+
+  int _nParticles = 2000;
 
  private:
   // workers

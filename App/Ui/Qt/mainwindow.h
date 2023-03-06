@@ -26,7 +26,6 @@ class MainWindow : public QMainWindow {
 
  public:
   explicit MainWindow(QWidget* parent = nullptr);
-
   ~MainWindow() override;
 
   void closeEvent(QCloseEvent* event) override {
@@ -144,6 +143,8 @@ class MainWindow : public QMainWindow {
   void setSimpleViewSignal();
   void setGourandViewSignal();
 
+  void nParticlesChangedSignal(int);
+
   // zone view
-  void setZoneViewSignal(bool value);
+  void setZoneViewSignal(bool);
 };

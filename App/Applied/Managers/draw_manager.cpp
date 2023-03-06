@@ -36,7 +36,7 @@ void DrawManager::drawScene(const std::shared_ptr<Scene>& scene, const std::shar
   //    th_vec.at(i).join();
   //  }
 
-  int intent = drawer->height() / 16;
+  int intent = drawer->height() / 8;
   int y1_min = 0, y1_max = intent;
   auto visitor1 = DrawVisitor(drawer, camera, lights, mode, particleMode, y1_min, y1_max);
   std::thread t1([&]() { scene->objects()->accept(visitor1); });
@@ -69,38 +69,38 @@ void DrawManager::drawScene(const std::shared_ptr<Scene>& scene, const std::shar
   int y8_min = intent * 7, y8_max = intent * 8;
   auto visitor8 = DrawVisitor(drawer, camera, lights, mode, particleMode, y8_min, y8_max);
   std::thread t8([&]() { scene->objects()->accept(visitor8); });
-
-  int y9_min = intent * 8, y9_max = intent * 9;
-  auto visitor9 = DrawVisitor(drawer, camera, lights, mode, particleMode, y9_min, y9_max);
-  std::thread t9([&]() { scene->objects()->accept(visitor9); });
-
-  int y10_min = intent * 9, y10_max = intent * 10;
-  auto visitor10 = DrawVisitor(drawer, camera, lights, mode, particleMode, y10_min, y10_max);
-  std::thread t10([&]() { scene->objects()->accept(visitor10); });
-
-  int y11_min = intent * 10, y11_max = intent * 11;
-  auto visitor11 = DrawVisitor(drawer, camera, lights, mode, particleMode, y11_min, y11_max);
-  std::thread t11([&]() { scene->objects()->accept(visitor11); });
-
-  int y12_min = intent * 11, y12_max = intent * 12;
-  auto visitor12 = DrawVisitor(drawer, camera, lights, mode, particleMode, y12_min, y12_max);
-  std::thread t12([&]() { scene->objects()->accept(visitor12); });
-
-  int y13_min = intent * 12, y13_max = intent * 13;
-  auto visitor13 = DrawVisitor(drawer, camera, lights, mode, particleMode, y13_min, y13_max);
-  std::thread t13([&]() { scene->objects()->accept(visitor13); });
-
-  int y14_min = intent * 13, y14_max = intent * 14;
-  auto visitor14 = DrawVisitor(drawer, camera, lights, mode, particleMode, y14_min, y14_max);
-  std::thread t14([&]() { scene->objects()->accept(visitor14); });
-
-  int y15_min = intent * 14, y15_max = intent * 15;
-  auto visitor15 = DrawVisitor(drawer, camera, lights, mode, particleMode, y15_min, y15_max);
-  std::thread t15([&]() { scene->objects()->accept(visitor15); });
-
-  int y16_min = intent * 15, y16_max = intent * 16;
-  auto visitor16 = DrawVisitor(drawer, camera, lights, mode, particleMode, y16_min, y16_max);
-  std::thread t16([&]() { scene->objects()->accept(visitor16); });
+//
+//  int y9_min = intent * 8, y9_max = intent * 9;
+//  auto visitor9 = DrawVisitor(drawer, camera, lights, mode, particleMode, y9_min, y9_max);
+//  std::thread t9([&]() { scene->objects()->accept(visitor9); });
+//
+//  int y10_min = intent * 9, y10_max = intent * 10;
+//  auto visitor10 = DrawVisitor(drawer, camera, lights, mode, particleMode, y10_min, y10_max);
+//  std::thread t10([&]() { scene->objects()->accept(visitor10); });
+//
+//  int y11_min = intent * 10, y11_max = intent * 11;
+//  auto visitor11 = DrawVisitor(drawer, camera, lights, mode, particleMode, y11_min, y11_max);
+//  std::thread t11([&]() { scene->objects()->accept(visitor11); });
+//
+//  int y12_min = intent * 11, y12_max = intent * 12;
+//  auto visitor12 = DrawVisitor(drawer, camera, lights, mode, particleMode, y12_min, y12_max);
+//  std::thread t12([&]() { scene->objects()->accept(visitor12); });
+//
+//  int y13_min = intent * 12, y13_max = intent * 13;
+//  auto visitor13 = DrawVisitor(drawer, camera, lights, mode, particleMode, y13_min, y13_max);
+//  std::thread t13([&]() { scene->objects()->accept(visitor13); });
+//
+//  int y14_min = intent * 13, y14_max = intent * 14;
+//  auto visitor14 = DrawVisitor(drawer, camera, lights, mode, particleMode, y14_min, y14_max);
+//  std::thread t14([&]() { scene->objects()->accept(visitor14); });
+//
+//  int y15_min = intent * 14, y15_max = intent * 15;
+//  auto visitor15 = DrawVisitor(drawer, camera, lights, mode, particleMode, y15_min, y15_max);
+//  std::thread t15([&]() { scene->objects()->accept(visitor15); });
+//
+//  int y16_min = intent * 15, y16_max = intent * 16;
+//  auto visitor16 = DrawVisitor(drawer, camera, lights, mode, particleMode, y16_min, y16_max);
+//  std::thread t16([&]() { scene->objects()->accept(visitor16); });
 //
 //  int y17_min = intent * 16, y17_max = intent * 17;
 //  auto visitor17 = DrawVisitor(drawer, camera, lights, mode, particleMode, y17_min, y17_max);
@@ -174,15 +174,15 @@ void DrawManager::drawScene(const std::shared_ptr<Scene>& scene, const std::shar
   t6.join();
   t7.join();
   t8.join();
-  t9.join();
-  t10.join();
-  t11.join();
-  t12.join();
-  t13.join();
-  t14.join();
-  t15.join();
-  t16.join();
-//  t17.join();
+  //  t9.join();
+  //  t10.join();
+  //  t11.join();
+  //  t12.join();
+  //  t13.join();
+  //  t14.join();
+  //  t15.join();
+  //  t16.join();
+  //  t17.join();
 //  t18.join();
 //  t19.join();
 //  t20.join();

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1013</width>
-    <height>906</height>
+    <height>919</height>
    </rect>
   </property>
   <property name="font">
@@ -46,6 +46,7 @@
         <property name="font">
          <font>
           <pointsize>14</pointsize>
+          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -341,7 +342,7 @@
             </size>
            </property>
            <property name="minimum">
-            <number>1</number>
+            <number>10</number>
            </property>
            <property name="maximum">
             <number>100</number>
@@ -463,6 +464,7 @@
         <property name="font">
          <font>
           <pointsize>14</pointsize>
+          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -703,7 +705,7 @@
      <x>0</x>
      <y>0</y>
      <width>1013</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">

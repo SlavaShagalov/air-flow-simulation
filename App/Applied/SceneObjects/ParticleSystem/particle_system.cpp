@@ -77,52 +77,8 @@ void ParticleSystem::createExample(float xMin, float xMax, float yMin, float yMa
   gridInsertParticles();
 }
 
-void ParticleSystem::addVolume(Vec3f min, Vec3f max, float spacing) {
-  float dx, dy, dz;
-
-  dx = max.x() - min.x();
-  dy = max.y() - min.y();
-  dz = max.z() - min.z();
-
-  // generate particles in defined positions
-  for (float x = min.x(); x <= max.x() && _particles.size() < _maxp; x += spacing) {
-    for (float y = min.y(); y <= max.y() && _particles.size() < _maxp; y += spacing) {
-      for (float z = min.z(); z <= max.z() && _particles.size() < _maxp; z += spacing) {
-        if (_mb.xMin - 1 <= x && x <= _mb.xMax + 1 && _mb.yMin - 1 <= y && y <= _mb.yMax + 1 && _mb.zMin - 1 <= z &&
-            z <= _mb.zMax + 1) {
-          continue;
-        }
-
-        //        std::cout << "Insert...\n";
-        auto &p = _particles.emplace_back();
-        p.pos.set(x, y, z);
-        p.clr = COLORA((x - min.x()) / dx, (y - min.y()) / dy, (z - min.z()) / dz, 1);
-        p.vel.set(-1, 0, 0);
-        p.vel_eval.set(-1, 0, 0);
-      }
-    }
-  }
-
-  //  std::cout << "Inserted particles:\n";
-  //  auto it = _particles.begin();
-  //  for (int i = 0; i < 10 && it != _particles.end(); ++i, ++it) {
-  //    std::cout << *it << std::endl;
-  //  }
-}
-
 void ParticleSystem::run() {
   float ss = _p_dist / _sim_scale;  // simulation scale
-
-  //  if (m_Vec[EMIT_RATE].x() > 0 &&
-  //      (++m_Frame) % (int)m_Vec[EMIT_RATE].x() == 0) {
-  //    // m_Frame = 0;
-
-  //    m_Vec[EMIT_POS].set(m_Vec[VOL_MAX].x(), m_Vec[VOL_MIN].y() + rand() %
-  //    20,
-  //                        m_Vec[VOL_MIN].z() + rand() % 20);  // Added
-
-  //    Emit(ss);
-  //  }
 
   if (_time - _last_emit_time > _emit_rate) {
     //    std::cout << "Time to emit!\n";
@@ -153,7 +109,7 @@ void ParticleSystem::advance() {
   Vec3f pc1, pc2, pc3;
   float a1, a2, a3, dist;
 
-  Vec3f norm, accel, vnext;
+  Vec3f norm, accel, vel_next_half;
   Vec3f min, max;
   double adj;
   float ss, radius;
@@ -169,19 +125,18 @@ void ParticleSystem::advance() {
 
   Vec3i d = Vec3i((max - min).x(), (max - min).y(), (max - min).z());
 
-  for (auto it = _particles.begin(); it != _particles.end(); ++it) {
-    if (std::isnan(it->pos.x()) || std::isnan(it->pos.y()) || std::isnan(it->pos.z())) {
-      auto saved = it - 1;
+  for (auto p_iter = _particles.begin(); p_iter != _particles.end(); ++p_iter) {
+    if (std::isnan(p_iter->pos.x()) || std::isnan(p_iter->pos.y()) || std::isnan(p_iter->pos.z())) {
+      auto saved = p_iter - 1;
       //      std::cout << "Broken particle, p_size = " << _particles.size()
       //                << std::endl;
-      _particles.erase(it);
-      it = saved;
+      _particles.erase(p_iter);
+      p_iter = saved;
       continue;
     }
 
-    //  for (auto &p : _particles) {
     // Compute Acceleration
-    accel = it->force * _p_mass;  // Why, a = F / m?
+    accel = p_iter->force * _p_mass;  // Why, a = F / m?
 
     // Velocity limiting
     speed = accel.x() * accel.x() + accel.y() * accel.y() + accel.z() * accel.z();
@@ -189,9 +144,81 @@ void ParticleSystem::advance() {
       accel *= _limit / sqrt(speed);
     }
 
+    // Z-axis walls
+    diff = 2 * radius - (p_iter->pos.z() - min.z()) * ss;
+    if (diff > EPSILON) {
+      norm.set(0, 0, 1);
+
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p_iter->vel_actual);
+      accel.x() += adj * norm.x();
+      accel.y() += adj * norm.y();
+      accel.z() += adj * norm.z();
+    }
+    diff = 2 * radius - (max.z() - p_iter->pos.z()) * ss;
+    if (diff > EPSILON) {
+      norm.set(0, 0, -1);
+
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p_iter->vel_actual);
+      accel.x() += adj * norm.x();
+      accel.y() += adj * norm.y();
+      accel.z() += adj * norm.z();
+    }
+
+    // X-axis walls
+    diff = 2 * radius - (p_iter->pos.x() - min.x()) * ss;
+    if (diff > EPSILON) {
+      auto saved = p_iter - 1;
+      //      std::cout << "Particle reached end, p_size = " <<
+      //      _particles.size()
+      //                << std::endl;
+      _particles.erase(p_iter);
+      p_iter = saved;
+      continue;
+    }
+    diff = 2 * radius - (max.x() - p_iter->pos.x()) * ss;
+    if (diff > EPSILON) {
+      norm.set(-1, 0, 0);
+
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p_iter->vel_actual);
+      accel.x() += adj * norm.x();
+      accel.y() += adj * norm.y();
+      accel.z() += adj * norm.z();
+    }
+
+    // Y-axis walls
+    diff = 2 * radius - (p_iter->pos.y() - min.y()) * ss;
+    if (diff > EPSILON) {
+      norm.set(0, 1, 0);
+
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p_iter->vel_actual);
+      accel.x() += adj * norm.x();
+      accel.y() += adj * norm.y();
+      accel.z() += adj * norm.z();
+    }
+    diff = 2 * radius - (max.y() - p_iter->pos.y()) * ss;
+    if (diff > EPSILON) {
+      norm.set(0, -1, 0);
+
+      adj = stiff * diff - damp * Vec3f::dotProduct(norm, p_iter->vel_actual);
+      accel.x() += adj * norm.x();
+      accel.y() += adj * norm.y();
+      accel.z() += adj * norm.z();
+    }
+
+    bool flag_changed = false;
     if (_obstacle) {
       // Obstacle collision
-      p1 = it->pos, p2 = (it->pos + it->vel_eval);
+      p1 = p_iter->pos, p2 = (p_iter->pos + p_iter->vel_actual);
+
+      // integration
+      vel_next_half = accel * _dt + p_iter->vel_prev_half;  // v(t+1/2) = v(t-1/2) + a(t) dt
+
+      Vec3f new_vel = (p_iter->vel_prev_half + vel_next_half) * 0.5;  // v(t+1) = [v(t-1/2) + v(t+1/2)] * 0.5
+                                                                      // used to compute forces later
+      vel_next_half *= _dt / ss;
+      Vec3f new_pos = p_iter->pos + vel_next_half;  // p(t+1) = p(t) + v(t+1/2) dt
+      p2 = new_pos;
+
       for (const auto &face : faces) {
         v1 = vertices[face.vertex(0)];
         v2 = vertices[face.vertex(1)];
@@ -210,6 +237,7 @@ void ParticleSystem::advance() {
         numerator = A * p1.x() + B * p1.y() + C * p1.z() + D;
         denominator = A * (p1.x() - p2.x()) + B * (p1.y() - p2.y()) + C * (p1.z() - p2.z());
 
+        // прямая параллельна плоскости
         if (fabs(denominator) < EPSILON)
           continue;
 
@@ -228,113 +256,116 @@ void ParticleSystem::advance() {
         a2 = acos(Vec3f::dotProduct(pc2, pc3));
         a3 = acos(Vec3f::dotProduct(pc3, pc1));
 
-        if (fabs((a1 + a2 + a3) * RTOD - 360) > 1e-3)
+        //        if (fabs((a1 + a2 + a3) * RTOD - 360) > 1e-3)
+        if (fabs((a1 + a2 + a3) - M_PI * 2.0f) > 1e-1)
+          //        if (fabs((a1 + a2 + a3) * RTOD - 360) > 3)
           continue;
 
-        // find dist
+        // change accel
         dist = (pi - p1).length();
-
         diff = 2 * radius - dist * ss;
         if (diff < 2 * radius && diff > 1e-3) {
-          adj = 2 * stiff * diff - damp * Vec3f::dotProduct(normal, it->vel_eval);
+          //          adj = 2 * stiff * diff - damp * Vec3f::dotProduct(normal, p_iter->vel_actual);
+          adj = 2 * stiff * diff - damp * Vec3f::dotProduct(normal, new_vel);
           accel.x() += adj * normal.x();
           accel.y() += adj * normal.y();
           accel.z() += adj * normal.z();
+
+          //          auto saved = p_iter - 1;
+          //          //      std::cout << "Broken particle, p_size = " << _particles.size()
+          //          //                << std::endl;
+          //          _particles.erase(p_iter);
+          //          p_iter = saved;
+          //          flag_changed = true;
+          //          break;
         }
       }
     }
 
-    // Z-axis walls
-    diff = 2 * radius - (it->pos.z() - min.z()) * ss;
-    if (diff > EPSILON) {
-      norm.set(0, 0, 1);
-
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, it->vel_eval);
-      accel.x() += adj * norm.x();
-      accel.y() += adj * norm.y();
-      accel.z() += adj * norm.z();
-    }
-    diff = 2 * radius - (max.z() - it->pos.z()) * ss;
-    if (diff > EPSILON) {
-      norm.set(0, 0, -1);
-
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, it->vel_eval);
-      accel.x() += adj * norm.x();
-      accel.y() += adj * norm.y();
-      accel.z() += adj * norm.z();
-    }
-
-    // X-axis walls
-    diff = 2 * radius - (it->pos.x() - min.x()) * ss;
-    if (diff > EPSILON) {
-      auto saved = it - 1;
-      //      std::cout << "Particle reached end, p_size = " <<
-      //      _particles.size()
-      //                << std::endl;
-      _particles.erase(it);
-      it = saved;
-      //      p.pos = Vec3f(max.x() - 6 * radius, min.y() + rand() % d.y(),
-      //                    min.z() + rand() % d.z());
-      //      p.vel = Vec3f(-5, 0, 0);
-      //      p.vel_eval = Vec3f(-5, 0, 0);
-      continue;
-    }
-    diff = 2 * radius - (max.x() - it->pos.x()) * ss;
-    if (diff > EPSILON) {
-      norm.set(-1, 0, 0);
-
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, it->vel_eval);
-      accel.x() += adj * norm.x();
-      accel.y() += adj * norm.y();
-      accel.z() += adj * norm.z();
-    }
-
-    // Y-axis walls
-    diff = 2 * radius - (it->pos.y() - min.y()) * ss;
-    if (diff > EPSILON) {
-      norm.set(0, 1, 0);
-
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, it->vel_eval);
-      accel.x() += adj * norm.x();
-      accel.y() += adj * norm.y();
-      accel.z() += adj * norm.z();
-    }
-    diff = 2 * radius - (max.y() - it->pos.y()) * ss;
-    if (diff > EPSILON) {
-      norm.set(0, -1, 0);
-
-      adj = stiff * diff - damp * Vec3f::dotProduct(norm, it->vel_eval);
-      accel.x() += adj * norm.x();
-      accel.y() += adj * norm.y();
-      accel.z() += adj * norm.z();
-    }
+    //    if (flag_changed) {
+    //      continue;
+    //    }
 
     // Leapfrog Integration
-    vnext = accel;
-    vnext *= _dt;
-    vnext += it->vel;  // v(t+1/2) = v(t-1/2) + a(t) dt
+    // calculate new velocity and position
+    vel_next_half = accel * _dt + p_iter->vel_prev_half;  // v(t+1/2) = v(t-1/2) + a(t) dt
 
-    it->vel_eval = it->vel;
-    it->vel_eval += vnext;
-    it->vel_eval *= 0.5;  // v(t+1) = [v(t-1/2) + v(t+1/2)] * 0.5
-                          // used to compute forces later
+    p_iter->vel_actual = (p_iter->vel_prev_half + vel_next_half) * 0.5;  // v(t+1) = [v(t-1/2) + v(t+1/2)] * 0.5
+                                                                         // used to compute forces later
+    p_iter->vel_prev_half = vel_next_half;
+    vel_next_half *= _dt / ss;
+    p_iter->pos += vel_next_half;  // p(t+1) = p(t) + v(t+1/2) dt
 
-    it->vel = vnext;
-    vnext *= _dt / ss;
-    it->pos += vnext;  // p(t+1) = p(t) + v(t+1/2) dt
+    // check particle in model
+    flag_changed = false;
+    bool dir = false;
+    int l = 0;
+    if (_obstacle) {
+      for (const auto &face : faces) {
+        v1 = vertices[face.vertex(0)];
+        v2 = vertices[face.vertex(1)];
+        v3 = vertices[face.vertex(2)];
+        v1 *= 30;
+        v2 *= 30;
+        v3 *= 30;
+
+        normal = Vec3f::crossProduct(v2 - v1, v3 - v1).normalize();
+
+        A = normal.x();
+        B = normal.y();
+        C = normal.z();
+
+        D = -(A * v1.x() + B * v1.y() + C * v1.z());
+
+        float value = A * p_iter->pos.x() + B * p_iter->pos.y() + C * p_iter->pos.z() + D;
+
+        if (l == 0) {
+          if (value <= 0) {
+            dir = true;
+          } else {
+            dir = false;
+          }
+          ++l;
+          continue;
+        }
+
+        if (value <= 0) {
+          if (dir != true) {
+            flag_changed = true;
+            break;
+          }
+        } else {
+          if (dir != false) {
+            flag_changed = true;
+            break;
+          }
+        }
+
+        ++l;
+      }
+    }
+
+    if (!flag_changed) {
+      auto saved = p_iter - 1;
+      //      std::cout << "Broken particle, p_size = " << _particles.size()
+      //                << std::endl;
+      _particles.erase(p_iter);
+      p_iter = saved;
+      continue;
+    }
 
     // set color
     if (_clr_mode == 1.0) {
-      adj = fabs(vnext.x()) + fabs(vnext.y()) + fabs(vnext.z()) / 7000.0;
+      adj = fabs(vel_next_half.x()) + fabs(vel_next_half.y()) + fabs(vel_next_half.z()) / 7000.0;
       adj = (adj > 1.0) ? 1.0 : adj;
-      it->clr = COLORA(0, adj, adj, 1);
+      p_iter->clr = COLORA(0, adj, adj, 1);
     } else if (_clr_mode == 2.0) {
-      float v = 0.5 + (it->pressure / 1500.0);
+      float v = 0.5 + (p_iter->pressure / 1500.0);
       if (v < 0.1)
         v = 0.1;
       if (v > 1.0)
         v = 1.0;
-      it->clr = COLORA(v, 1 - v, 0, 1);
+      p_iter->clr = COLORA(v, 1 - v, 0, 1);
     }
   }
 
@@ -354,10 +385,10 @@ void ParticleSystem::emitParticles() {
 
     Particle &p = _particles.emplace_back();
     p.pos = pos;
-    p.vel = dir;
-    p.vel_eval = dir;
+    p.vel_prev_half = dir;
+    p.vel_actual = dir;
     p.clr = COLORA(0, 0, 0, 1);
-    //    std::cout << "Emmited particle: " << p.pos << p.vel << std::endl;
+    //    std::cout << "Emmited particle: " << p.pos << p.vel_prev_half << std::endl;
     //    std::cout << "Particles Size = " << _particles.size() << std::endl;
     ++i;
   }
@@ -458,9 +489,9 @@ void ParticleSystem::computeForceGridNC() {
 
       vterm = _LapKern * _viscosity;
 
-      force.x() += (pterm * dx + vterm * (pCur->vel_eval.x() - p.vel_eval.x())) * dterm;
-      force.y() += (pterm * dy + vterm * (pCur->vel_eval.y() - p.vel_eval.y())) * dterm;
-      force.z() += (pterm * dz + vterm * (pCur->vel_eval.z() - p.vel_eval.z())) * dterm;
+      force.x() += (pterm * dx + vterm * (pCur->vel_actual.x() - p.vel_actual.x())) * dterm;
+      force.y() += (pterm * dy + vterm * (pCur->vel_actual.y() - p.vel_actual.y())) * dterm;
+      force.z() += (pterm * dz + vterm * (pCur->vel_actual.z() - p.vel_actual.z())) * dterm;
     }
 
     p.force = force;

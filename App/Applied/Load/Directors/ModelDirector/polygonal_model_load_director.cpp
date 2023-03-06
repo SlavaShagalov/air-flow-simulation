@@ -28,6 +28,7 @@ PolygonalModelLoadDirector::load(const std::string& fileName) {
 
   std::ifstream in;
   in.open(fileName, std::ifstream::in);
+//  in.open("/media/slava/F66890B468907559/GitHub/without_workers/Data/Models/Polygonal/Triangulated/sphere.obj", std::ifstream::in);
   if (in.fail()) {
     qDebug() << "Fail";
     return nullptr;

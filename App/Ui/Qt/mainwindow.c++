@@ -1,35 +1,14 @@
 #include "mainwindow.h"
 
-#include <App/Applied/Commands/CameraCommands/add_camera_command.h>
-#include <App/Applied/Commands/CameraCommands/load_camera_command.h>
-#include <App/Applied/Commands/CameraCommands/rotate_camera_command.h>
-#include <App/Applied/Commands/CameraCommands/set_cur_camera_command.h>
-#include <App/Applied/Commands/ModelCommands/add_model_command.h>
-#include <App/Applied/Commands/ModelCommands/load_model_command.h>
-#include <App/Applied/Commands/ModelCommands/load_polygonal_model_command.h>
-#include <App/Applied/Commands/ModelCommands/move_model_command.h>
-#include <App/Applied/Commands/ModelCommands/remove_model_command.h>
-#include <App/Applied/Commands/ModelCommands/rotate_model_command.h>
-#include <App/Applied/Commands/ModelCommands/scale_model_command.h>
-#include <App/Applied/Commands/SceneCommands/draw_scene_command.h>
-#include <App/Applied/Commands/SceneCommands/get_cur_camera_command.h>
-#include <App/Applied/Commands/SceneCommands/get_object_command.h>
-#include <App/Applied/Commands/SceneCommands/get_scene_command.h>
-#include <App/Applied/Drawer/solution_drawer_factory.h>
-#include <App/Applied/Exceptions/base_exception.h>
-#include <App/Applied/SceneObjects/Model/polygonal_model.h>
-#include <App/Applied/SceneObjects/Model/wireframe_model.h>
 #include <App/Applied/SceneObjects/ParticleSystem/particle_system.h>
 #include <App/Ui/Qt/Drawer/qt_drawer_factory.h>
 
-#include <App/Applied/Commands/LightCommands/add_light_command.hpp>
-#include <App/Applied/Commands/ParticleSystemCommands/add_particle_system_command.hpp>
-#include <App/Applied/Commands/ParticleSystemCommands/remove_particle_system_command.hpp>
 #include <App/Applied/Primitives/Vector3D/vector_3d.hpp>
 #include <QDebug>
 #include <QFileDialog>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QSpinBox>
 #include <QThread>
 #include <thread>
 
@@ -45,6 +24,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), _ui(new Ui::MainW
   _ui->int_stiff->setVisible(false);
   _ui->ext_stiff->setVisible(false);
   _ui->ext_stiff_label->setVisible(false);
+  _ui->delModelBtn->setDisabled(true);
+  _ui->runSimBtn->setDisabled(true);
 
   // setup timer
   _timer.setSingleShot(true);
@@ -75,8 +56,15 @@ void MainWindow::start() {
   connect(_ui->simpleRadioBtn, &QRadioButton::pressed, this, &MainWindow::setSimpleViewSignal);
   connect(_ui->guroRadioBtn, &QRadioButton::pressed, this, &MainWindow::setGourandViewSignal);
 
+  // max number of particles
+//  connect(_ui->nParticlesSpinBox, &valueChanged, this, &MainWindow::nParticlesChangedSignal);
+  connect(_ui->nParticlesSpinBox, SIGNAL(valueChanged(int)), this, SIGNAL(nParticlesChangedSignal(int)));
+
   // zone view
   connect(_ui->zoneViewCheckBox, &QCheckBox::clicked, this, &MainWindow::setZoneViewSignal);
+
+//  on_loadPolygonalModelBtn_clicked();
+//  on_runSimBtn_clicked();
 }
 
 // mouse and keyboard handle
@@ -152,7 +140,6 @@ void MainWindow::_simStoppedEnableInterface() {
   _ui->delModelBtn->setEnabled(true);
   _ui->simZoneGroupBox->setEnabled(true);
   _ui->nParticlesSpinBox->setEnabled(true);
-  _ui->loadPolygonalModelBtn->setEnabled(true);
   _ui->modelRadioBtn->setEnabled(true);
 }
 
@@ -160,16 +147,21 @@ void MainWindow::_simStoppedEnableInterface() {
 void MainWindow::on_loadPolygonalModelBtn_clicked() {
   //  QString fileName = "Data/Models/Polygonal//Triangulated/african_head.obj";
   //  QString fileName = "Data/Models/Polygonal/Triangulated/heart.obj";
-  QString fileName = "Data/Models/Polygonal/Triangulated/cube.obj";
+//  QString fileName = "Data/Models/Polygonal/Triangulated/cube.obj";
   //  QString fileName = "Data/Models/Polygonal/Triangulated/wing.obj";
   //  QString fileName = "Data/Models/Polygonal/Triangulated/s_57.obj";
+  //  QString fileName = "Data/Models/Polygonal/Triangulated/sphere.obj";
 
-  //  auto fileName = QFileDialog::getOpenFileName();
+    auto fileName = QFileDialog::getOpenFileName();
 
   if (fileName.isNull())
     return;
 
   emit loadModelSignal(fileName);
+
+  _ui->loadPolygonalModelBtn->setDisabled(true);
+  _ui->delModelBtn->setDisabled(false);
+  _ui->runSimBtn->setDisabled(false);
 }
 
 void MainWindow::on_runSimBtn_clicked() {
@@ -221,6 +213,9 @@ void MainWindow::on_zoneViewCheckBox_stateChanged(int arg1) {
 // model control
 void MainWindow::on_delModelBtn_clicked() {
   emit delModelSignal();
+  _ui->delModelBtn->setDisabled(true);
+  _ui->loadPolygonalModelBtn->setDisabled(false);
+  _ui->runSimBtn->setDisabled(true);
 }
 
 // modeling parameters

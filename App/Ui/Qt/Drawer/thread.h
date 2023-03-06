@@ -19,9 +19,9 @@ class Thread : public QThread {
     std::cout << "run()\n";
     for (;;) {
       if (*simRunned) {
-        //        psys->run();
+        //        _psys->run();
         //        m->_ui->cur_n_particles->setText(
-        //            QString::number(psys->_particles.size()));
+        //            QString::number(_psys->_particles.size()));
         m->_updateScene();
       }
     }

@@ -73,7 +73,7 @@ class SimWorker : public QObject {
 //      _qScene->addLine(20, 20, 40, 60, QPen(Qt::red));
 //      _qScene->addLine(100, 10, 60, 80, QPen(Qt::green));
       _psys->run();
-      //      _ui->cur_n_particles->setText(QString::number(psys->_particles.size()));
+      //      _ui->cur_n_particles->setText(QString::number(_psys->_particles.size()));
       updateScene();
     }
     std::cout << "SimWorker finished\n";
